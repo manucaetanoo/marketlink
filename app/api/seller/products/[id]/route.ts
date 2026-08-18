@@ -2,20 +2,13 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
-import { normalizeProductColors } from "@/lib/product-color";
 import { normalizeProductImageUrls } from "@/lib/product-images";
 
 const productCategories = [
-  "CLOTHING",
-  "SHOES",
-  "ACCESSORIES",
-  "BEAUTY",
-  "HOME",
   "DIGITAL",
-  "OTHER",
 ] as const;
 
-const categoriesWithSizes = new Set(["CLOTHING", "SHOES"]);
+const categoriesWithSizes = new Set<string>();
 
 function normalizeSizes(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -48,12 +41,13 @@ export async function PATCH(
     const data: {
       name?: string;
       desc?: string | null;
+      digitalAccessInstructions?: string | null;
       price?: number;
       stock?: number;
       isActive?: boolean;
       category?: (typeof productCategories)[number];
       sizes?: string[];
-      colors?: Array<{ name: string; hex: string }>;
+      colors?: [];
       commissionValue?: number;
       commissionType?: "PERCENT";
       imageUrls?: string[];
@@ -74,6 +68,11 @@ export async function PATCH(
 
     if (body.desc !== undefined) data.desc = String(body.desc).trim() || null;
 
+    if (body.digitalAccessInstructions !== undefined) {
+      data.digitalAccessInstructions =
+        String(body.digitalAccessInstructions).trim() || null;
+    }
+
     if (body.price !== undefined) {
       const price = Number(body.price);
 
@@ -87,25 +86,12 @@ export async function PATCH(
       data.price = price;
     }
 
-    if (body.stock !== undefined) {
-      const stock = Number(body.stock);
-
-      if (!Number.isInteger(stock) || stock < 0) {
-        return NextResponse.json(
-          { ok: false, error: "Stock invalido" },
-          { status: 400 }
-        );
-      }
-
-      data.stock = stock;
-    }
-
     if (body.category !== undefined) {
       const category = String(body.category).trim().toUpperCase();
 
       if (!productCategories.includes(category as (typeof productCategories)[number])) {
         return NextResponse.json(
-          { ok: false, error: "Categoria invalida" },
+          { ok: false, error: "Solo se pueden publicar productos digitales" },
           { status: 400 }
         );
       }
@@ -115,15 +101,12 @@ export async function PATCH(
         ? normalizeSizes(body.sizes)
         : [];
     } else if (body.sizes !== undefined) {
-      data.sizes = normalizeSizes(body.sizes);
+      data.sizes = [];
     }
 
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
 
-    if (body.colors !== undefined) {
-      const colors = normalizeProductColors(body.colors);
-      data.colors = colors.length ? colors : [];
-    }
+    data.colors = [];
 
     if (body.commissionValue !== undefined) {
       const commissionValue = Number(body.commissionValue);
@@ -165,6 +148,7 @@ export async function PATCH(
         id: true,
         name: true,
         desc: true,
+        digitalAccessInstructions: true,
         price: true,
         stock: true,
         category: true,

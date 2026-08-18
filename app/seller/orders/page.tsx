@@ -39,9 +39,6 @@ export default async function SellerOrdersPage() {
       netAmount: true,
       status: true,
       fulfillmentStatus: true,
-      shippingCarrier: true,
-      trackingCode: true,
-      trackingUrl: true,
       sellerNotes: true,
       shippedAt: true,
       deliveredAt: true,
@@ -53,13 +50,6 @@ export default async function SellerOrdersPage() {
           buyerName: true,
           buyerEmail: true,
           buyerPhone: true,
-          shippingStreet: true,
-          shippingNumber: true,
-          shippingApartment: true,
-          shippingCity: true,
-          shippingState: true,
-          shippingPostalCode: true,
-          shippingCountry: true,
           shippingNotes: true,
           items: {
             where: {
@@ -111,19 +101,19 @@ export default async function SellerOrdersPage() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-                  Pedidos y envios
+                  Ventas digitales
                 </p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                  Logistica de tus ventas
+                  Ventas de productos digitales
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Prepara pedidos y carga tracking o evidencia de envio propio. La
-                  plataforma confirma la entrega y libera el monto a liquidar.
+                  Revisa compradores, productos vendidos y montos disponibles para
+                  liquidacion. Es un flujo digital, sin gestion logistica.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-                {orders.length} pedidos pagos
+                {orders.length} ventas pagas
               </div>
             </div>
 
@@ -134,7 +124,7 @@ export default async function SellerOrdersPage() {
                   href="/seller/orders/settled"
                   className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
-                  Ver ordenes ya liquidadas
+                  Ver ventas ya liquidadas
                 </Link>
               </div>
             </section>

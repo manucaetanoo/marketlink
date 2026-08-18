@@ -30,12 +30,6 @@ export async function PATCH(
         select: {
           id: true,
           status: true,
-          items: {
-            select: {
-              productId: true,
-              quantity: true,
-            },
-          },
           settlements: {
             select: {
               id: true,
@@ -68,28 +62,6 @@ export async function PATCH(
               "No se puede cancelar automaticamente una orden con liquidaciones ya pagadas",
           },
         };
-      }
-
-      if (order.status === OrderStatus.PAID) {
-        const stockByProduct = new Map<string, number>();
-
-        for (const item of order.items) {
-          stockByProduct.set(
-            item.productId,
-            (stockByProduct.get(item.productId) ?? 0) + item.quantity
-          );
-        }
-
-        for (const [productId, quantity] of stockByProduct) {
-          await tx.product.update({
-            where: { id: productId },
-            data: {
-              stock: {
-                increment: quantity,
-              },
-            },
-          });
-        }
       }
 
       await tx.order.update({

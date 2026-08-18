@@ -3,7 +3,6 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import type { Metadata } from "next";
 import ProductsCatalogClient from "@/components/ProductsCatalogClient";
-import { parseProductColors } from "@/lib/product-color";
 import { getRenderableProductImageUrls } from "@/lib/product-images";
 
 
@@ -32,7 +31,6 @@ async function getActiveProducts() {
         price: true,
         stock: true,
         commissionValue: true,
-        colors: true,
         imageUrls: true,
       },
     }),
@@ -49,7 +47,6 @@ async function getActiveProducts() {
       price: product.price,
       stock: product.stock,
       commissionValue: product.commissionValue,
-      colors: parseProductColors(product.colors),
       imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
     })),
   };

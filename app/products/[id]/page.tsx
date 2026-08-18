@@ -6,7 +6,7 @@ import {
   FiDollarSign,
   FiPackage,
   FiTag,
-  FiTruck,
+  FiDownloadCloud,
 } from "react-icons/fi";
 import Navbar from "@/components/Navbar";
 import ProductGallery from "@/components/ProductGallery";
@@ -18,7 +18,6 @@ import {
 } from "@/components/ProductRolePanels";
 import { prisma } from "@/lib/prisma";
 import { getSellerNetAmount } from "@/lib/pricing";
-import { parseProductColors } from "@/lib/product-color";
 import {
   getFirstRenderableProductImage,
   getRenderableProductImageUrls,
@@ -87,8 +86,6 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const categoryName = categoryLabels[product.category] ?? "Producto";
-  const hasStock = product.stock > 0;
-  const colors = parseProductColors(product.colors);
   const sellerNet = getSellerNetAmount({
     price: product.price,
     affiliateCommissionValue: product.commissionValue,
@@ -124,16 +121,10 @@ export default async function ProductPage({
                   <FiTag />
                   {categoryName}
                 </span>
-                {product.isActive && hasStock && (
+                {product.isActive && (
                   <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                     <FiCheckCircle />
                     Disponible
-                  </span>
-                )}
-                {!hasStock && (
-                  <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-                    <FiPackage />
-                    Sin stock
                   </span>
                 )}
                 <ProductAffiliateJumpButton sellerId={product.seller.id} />
@@ -146,22 +137,6 @@ export default async function ProductPage({
                 <p className="mt-4 text-base leading-7 text-slate-600">
                   {product.desc ?? "Este producto todavia no tiene descripcion."}
                 </p>
-                {colors.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {colors.map((color) => (
-                      <span
-                        key={`${color.name}-${color.hex}`}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700"
-                      >
-                        <span
-                          className="h-4 w-4 rounded-full border border-slate-300"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                        {color.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="mt-6 rounded-2xl bg-slate-50 p-5">
@@ -178,22 +153,21 @@ export default async function ProductPage({
               />
 
               <ProductPurchaseActions
-                disabled={!hasStock}
+                disabled={!product.isActive}
                 product={{
                   id: product.id,
                   name: product.name,
                   price: product.price,
                   imageUrl: getFirstRenderableProductImage(product.imageUrls),
                   sizes: product.sizes,
-                  colors,
                 }}
               />
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-100 bg-white p-4">
-                  <FiTruck className="text-lg text-orange-500" />
+                  <FiDownloadCloud className="text-lg text-orange-500" />
                   <p className="mt-2 text-xs font-medium text-slate-500">
-                    Entrega coordinada
+                    Acceso digital
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-100 bg-white p-4">

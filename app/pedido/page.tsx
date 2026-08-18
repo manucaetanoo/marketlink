@@ -14,11 +14,11 @@ export default function PedidoPage() {
             <PackageSearch className="h-6 w-6" />
           </div>
           <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            Consulta el estado de tu pedido
+            Consulta tu compra digital
           </h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
-            Ingresa el numero de pedido que recibiste al finalizar la compra para
-            ver si esta pendiente, en preparacion o enviado.
+            Ingresa el numero de compra que recibiste al finalizar el pago para
+            ver el estado y recuperar las instrucciones de acceso.
           </p>
 
           <OrderLookupForm />

@@ -98,9 +98,6 @@ export default async function AdminOrdersPage() {
         netAmount: true,
         status: true,
         fulfillmentStatus: true,
-        shippingCarrier: true,
-        trackingCode: true,
-        trackingUrl: true,
         sellerNotes: true,
         shippedAt: true,
         deliveredAt: true,
@@ -119,13 +116,6 @@ export default async function AdminOrdersPage() {
             buyerName: true,
             buyerEmail: true,
             buyerPhone: true,
-            shippingStreet: true,
-            shippingNumber: true,
-            shippingApartment: true,
-            shippingCity: true,
-            shippingState: true,
-            shippingPostalCode: true,
-            shippingCountry: true,
             shippingNotes: true,
             items: {
               select: {
@@ -177,16 +167,15 @@ export default async function AdminOrdersPage() {
                   Plataforma
                 </p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                 Entregas
+                 Liquidaciones digitales
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Revisa todas las ordenes y confirma
-                  entregas cuando corresponda.
+                  Revisa ventas pagas, sellers y montos a liquidar en flujo digital.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-                {allOrders.length} ordenes registradas
+                {allOrders.length} ventas registradas
               </div>
             </div>
 
@@ -195,11 +184,11 @@ export default async function AdminOrdersPage() {
             <section className="mt-10">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-slate-950">
-                  Control de entregas
+                  Control de liquidaciones
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Revisa el tracking cargado por sellers y confirma entregas. Al
-                  confirmar una entrega, el dinero queda por liquidar al seller.
+                  Las ventas digitales quedan disponibles para liquidacion cuando el pago
+                  se aprueba.
                 </p>
               </div>
               <SellerOrdersClient orders={deliveryOrders} canConfirmDelivery />

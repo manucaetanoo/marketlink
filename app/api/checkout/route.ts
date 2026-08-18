@@ -62,9 +62,19 @@ export async function POST(req: Request) {
       ? (body.items as CheckoutItem[])
       : null;
 
-    if (!productId && (!items || items.length === 0)) {
+    if (items?.length) {
       return NextResponse.json(
-        { ok: false, error: "productId o items requerido" },
+        {
+          ok: false,
+          error: "El carrito ya no esta disponible. Compra un producto por vez.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!productId) {
+      return NextResponse.json(
+        { ok: false, error: "productId requerido" },
         { status: 400 }
       );
     }
@@ -79,33 +89,6 @@ export async function POST(req: Request) {
         
     const campaignClickId =
       cookieStore.get("aff_campaign_click_id")?.value;
-
-    if (items?.length) {
-      const checkoutItems = items
-        .filter((item) => item.productId)
-        .map((item) => ({
-          productId: item.productId!,
-          quantity: item.quantity,
-          selectedSize:
-            typeof item.selectedSize === "string" ? item.selectedSize : undefined,
-          selectedColor:
-            typeof item.selectedColor === "string" ? item.selectedColor : undefined,
-          clickId: item.clickId || undefined,
-          campaignClickId: item.campaignClickId || undefined,
-        }));
-
-      return NextResponse.json(
-        {
-          ok: true,
-          checkout: {
-            url: `/checkout?items=${encodeURIComponent(
-              encodeCheckoutItems(checkoutItems)
-            )}`,
-          },
-        },
-        { status: 200 }
-      );
-    }
 
     return NextResponse.json(
       {

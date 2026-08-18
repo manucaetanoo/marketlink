@@ -32,6 +32,7 @@ export default async function EditProductPage({ params }: Props) {
       id: true,
       name: true,
       desc: true,
+      digitalAccessInstructions: true,
       price: true,
       stock: true,
       category: true,
@@ -79,7 +80,7 @@ export default async function EditProductPage({ params }: Props) {
                 Editar producto
               </h1>
               <p className="mt-2 text-sm text-slate-500">
-                Ajusta informacion, precio, stock, talles, estado y comision.
+                Ajusta informacion, precio, acceso digital, estado y comision.
               </p>
             </div>
 

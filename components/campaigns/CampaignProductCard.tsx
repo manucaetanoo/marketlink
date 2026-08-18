@@ -48,7 +48,6 @@ export default function CampaignProductCard({
   );
   const hasAffiliateHighlights =
     showAffiliateHighlights && product.commissionValue > 0;
-  const hasStock = product.stock === undefined || product.stock > 0;
 
   return (
     <article className="group overflow-hidden rounded-[28px] border border-orange-100 bg-white shadow-[0_15px_50px_-35px_rgba(15,23,42,0.45)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_80px_-35px_rgba(249,115,22,0.45)]">
@@ -97,7 +96,7 @@ export default function CampaignProductCard({
             </p>
             {showStock && product.stock !== undefined && (
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                {hasStock ? `Stock: ${product.stock}` : "Sin stock"}
+                Producto digital
               </p>
             )}
           </div>
@@ -145,18 +144,9 @@ export default function CampaignProductCard({
 
           <Link
             href={`/products/${product.id}`}
-            aria-disabled={!hasStock}
-            className={`inline-flex flex-1 items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-white transition ${
-              hasStock
-                ? "bg-slate-900 hover:bg-orange-500"
-                : "pointer-events-none bg-slate-900 opacity-60"
-            }`}
+            className="inline-flex flex-1 items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-500"
           >
-            {!hasStock
-              ? showStock
-                ? "Sin stock"
-                : "No disponible"
-              : "Comprar ahora"}
+            Comprar ahora
           </Link>
         </div>
       </div>

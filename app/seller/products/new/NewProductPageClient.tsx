@@ -8,7 +8,6 @@ import {
   DocumentTextIcon,
   PhotoIcon,
   Squares2X2Icon,
-  ArchiveBoxIcon,
   ArrowDownTrayIcon,
   PlusIcon,
   XMarkIcon,
@@ -19,22 +18,11 @@ import {
   DEFAULT_PLATFORM_COMMISSION_TYPE,
   DEFAULT_PLATFORM_COMMISSION_VALUE,
 } from "@/lib/platform-commission";
-import { PRODUCT_COLOR_PRESETS, type ProductColorOption } from "@/lib/product-color";
 import { formatMoney, getSellerNetAmount } from "@/lib/pricing";
 import Sidebar from "@/components/Sidebar";
 
 const productCategories = [
-  { value: "CLOTHING", label: "Ropa", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
-  {
-    value: "SHOES",
-    label: "Calzado",
-    sizes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44"],
-  },
-  { value: "ACCESSORIES", label: "Accesorios", sizes: [] },
-  { value: "BEAUTY", label: "Belleza", sizes: [] },
-  { value: "HOME", label: "Hogar", sizes: [] },
   { value: "DIGITAL", label: "Digital", sizes: [] },
-  { value: "OTHER", label: "Otro", sizes: [] },
 ] as const;
 
 const categoriesWithSizes = new Set(["CLOTHING", "SHOES"]);
@@ -102,13 +90,9 @@ function NewProductPageContent({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [category, setCategory] = useState("OTHER");
+  const [category, setCategory] = useState("DIGITAL");
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [customSize, setCustomSize] = useState("");
-  const [colors, setColors] = useState<ProductColorOption[]>([]);
-  const [customColorName, setCustomColorName] = useState("");
-  const [customColorHex, setCustomColorHex] = useState("#111827");
-  const [showColorVariants, setShowColorVariants] = useState(false);
   const [commissionValue, setCommissionValue] = useState(10);
   const [platformCommissionValue, setPlatformCommissionValue] = useState(
     DEFAULT_PLATFORM_COMMISSION_VALUE
@@ -276,23 +260,6 @@ function NewProductPageContent({
     setCustomSize("");
   }
 
-  function toggleColor(color: ProductColorOption) {
-    setColors((current) =>
-      current.some((item) => item.name.toLowerCase() === color.name.toLowerCase())
-        ? current.filter((item) => item.name.toLowerCase() !== color.name.toLowerCase())
-        : [...current, color]
-    );
-  }
-
-  function addCustomColor() {
-    const name = customColorName.trim();
-    if (!name) return;
-
-    toggleColor({ name, hex: customColorHex });
-    setCustomColorName("");
-    setCustomColorHex("#111827");
-  }
-
   function removeImage(index: number) {
     setImageFiles((current) =>
       current.filter((_, currentIndex) => currentIndex !== index)
@@ -309,14 +276,13 @@ function NewProductPageContent({
     try {
       const name = String(fd.get("name") || "").trim();
       const desc = String(fd.get("desc") || "").trim();
+      const digitalAccessInstructions = String(
+        fd.get("digitalAccessInstructions") || ""
+      ).trim();
       const price = Number(fd.get("price") || 0);
-      const stock = Number(fd.get("stock") || 0);
 
       if (!name) throw new Error("Debes ingresar el nombre del producto");
       if (!price || price <= 0) throw new Error("Debes ingresar un precio valido");
-      if (!Number.isInteger(stock) || stock < 0) {
-        throw new Error("Debes ingresar un stock valido");
-      }
 
       const imageUrls =
         imageFiles.length > 0 ? await Promise.all(imageFiles.map(uploadImage)) : [];
@@ -324,11 +290,12 @@ function NewProductPageContent({
       const payload = {
         name,
         desc,
+        digitalAccessInstructions,
         price,
-        stock,
+        stock: 0,
         category,
         sizes: shouldShowSizes ? selectedSizes : [],
-        colors,
+        colors: [],
         commissionValue,
         commissionType: "PERCENT",
         imageUrls,
@@ -596,57 +563,17 @@ function NewProductPageContent({
 
                       <div>
                         <p className="text-sm font-medium text-orange-200">
-                          Catalogo de productos
+                          Catalogo digital
                         </p>
                         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                          Crea tu producto
+                          Crea tu producto digital
                         </h1>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      {shopifyImportEnabled && (
-                      <button
-                        type="button"
-                        onClick={() => setShowShopifyImport(true)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-orange-50"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/img/Shopify-Logo-PNG.png"
-                          alt=""
-                          className="h-5 w-auto object-contain"
-                        />
-                        Importar desde Shopify
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                      </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setShowWooCommerceImport(true)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-orange-50"
-                      >
-                        <span className="text-base font-black text-[#7f54b3]">W</span>
-                        Importar desde WooCommerce
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                      </button>
-                      {/* <button
-                        type="button"
-                        onClick={() => setShowFenicioImport(true)}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-orange-50"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element 
-                        <img
-                          src="/img/fenicio-logo.png"
-                          alt=""
-                          className="h-6 max-w-[92px] object-contain"
-                        />
-                        Importar desde Fenicio
-                        <ArrowDownTrayIcon className="h-4 w-4" />
-                      </button> */}
-
                       <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-                        Publicacion nueva
+                        Solo productos digitales
                       </div>
                     </div>
                   </div>
@@ -686,7 +613,7 @@ function NewProductPageContent({
                               name="name"
                               type="text"
                               required
-                              placeholder="Ej: Zapatillas Urban Pro"
+                              placeholder="Ej: Curso online de marketing"
                               className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
                             />
                           </div>
@@ -700,25 +627,10 @@ function NewProductPageContent({
                               Categoria
                             </label>
 
-                            <select
-                              id="category"
-                              name="category"
-                              value={category}
-                              onChange={(e) => {
-                                const nextCategory = e.target.value;
-                                setCategory(nextCategory);
-                                if (!categoriesWithSizes.has(nextCategory)) {
-                                  setSelectedSizes([]);
-                                }
-                              }}
-                              className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
-                            >
-                              {productCategories.map((item) => (
-                                <option key={item.value} value={item.value}>
-                                  {item.label}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-900">
+                              Digital
+                            </div>
+                            <input type="hidden" name="category" value="DIGITAL" />
 
                             {shouldShowSizes && (
                               <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
@@ -797,109 +709,6 @@ function NewProductPageContent({
                             )}
                           </div>
 
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <h3 className="text-sm font-semibold text-slate-900">
-                                  Variantes de color
-                                </h3>
-                                <p className="text-sm text-slate-500">
-                                  Opcional. Si no agregas ninguna, el producto queda sin variante de color.
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setShowColorVariants((current) => !current)}
-                                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                              >
-                                {showColorVariants ? "Ocultar colores" : "Agregar variante de color"}
-                              </button>
-                            </div>
-
-                            {colors.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {colors.map((color) => (
-                                  <button
-                                    key={`${color.name}-${color.hex}`}
-                                    type="button"
-                                    onClick={() => toggleColor(color)}
-                                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
-                                  >
-                                    <span
-                                      className="h-3.5 w-3.5 rounded-full border border-slate-300"
-                                      style={{ backgroundColor: color.hex }}
-                                    />
-                                    {color.name} x
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-
-                            {showColorVariants && (
-                              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
-                                <div className="flex flex-wrap gap-2">
-                                  {PRODUCT_COLOR_PRESETS.map((color) => (
-                                    <button
-                                      key={color.name}
-                                      type="button"
-                                      onClick={() => toggleColor(color)}
-                                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                                        colors.some((item) => item.name.toLowerCase() === color.name.toLowerCase())
-                                          ? "border-slate-950 bg-white text-slate-950 ring-2 ring-slate-200"
-                                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                                      }`}
-                                    >
-                                      <span
-                                        className="h-4 w-4 rounded-full border border-slate-300"
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                      {color.name}
-                                    </button>
-                                  ))}
-                                </div>
-
-                                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-                                  <input
-                                    type="text"
-                                    value={customColorName}
-                                    onChange={(e) => setCustomColorName(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        addCustomColor();
-                                      }
-                                    }}
-                                    placeholder="Agregar color personalizado"
-                                    maxLength={40}
-                                    className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
-                                  />
-                                  <div className="flex gap-2">
-                                    <label className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-                                      <span
-                                        className="h-6 w-6 rounded-full border border-slate-300"
-                                        style={{ backgroundColor: customColorHex }}
-                                      />
-                                      <input
-                                        type="color"
-                                        value={customColorHex}
-                                        onChange={(e) => setCustomColorHex(e.target.value)}
-                                        className="h-8 w-10 cursor-pointer border-0 bg-transparent p-0"
-                                        aria-label="Elegir color"
-                                      />
-                                    </label>
-                                    <button
-                                      type="button"
-                                      onClick={addCustomColor}
-                                      className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                                    >
-                                      Agregar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
                           <div>
                             <label
                               htmlFor="desc"
@@ -913,9 +722,30 @@ function NewProductPageContent({
                               id="desc"
                               name="desc"
                               rows={5}
-                              placeholder="Conta que hace especial a tu producto, materiales, beneficios, etc."
+                              placeholder="Conta que incluye el producto digital, para quien es y que resultado ayuda a conseguir."
                               className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
                             />
+                          </div>
+
+                          <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
+                            <label
+                              htmlFor="digitalAccessInstructions"
+                              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900"
+                            >
+                              <DocumentTextIcon className="h-4 w-4 text-orange-500" />
+                              Acceso al producto digital
+                            </label>
+
+                            <textarea
+                              id="digitalAccessInstructions"
+                              name="digitalAccessInstructions"
+                              rows={5}
+                              placeholder="Ej: Link del curso, pasos para crear usuario, email de soporte, instrucciones para activar la licencia."
+                              className="block w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+                            />
+                            <p className="mt-2 text-sm leading-6 text-orange-900">
+                              Esta informacion es privada y se envia al comprador cuando el pago queda confirmado.
+                            </p>
                           </div>
                         </div>
                       </section>
@@ -1015,10 +845,10 @@ function NewProductPageContent({
                       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                         <div className="mb-5">
                           <h2 className="text-base font-semibold text-slate-950">
-                            Precio y stock
+                            Precio
                           </h2>
                           <p className="mt-1 text-sm text-slate-500">
-                            Valores usados para ventas y calculo de ganancia.
+                            Valor usado para ventas y calculo de ganancia.
                           </p>
                         </div>
 
@@ -1050,30 +880,6 @@ function NewProductPageContent({
                                 className="w-full bg-transparent px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none"
                               />
                             </div>
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="stock"
-                              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900"
-                            >
-                              <ArchiveBoxIcon className="h-4 w-4 text-orange-500" />
-                              Stock disponible
-                            </label>
-
-                            <input
-                              id="stock"
-                              name="stock"
-                              type="number"
-                              min="0"
-                              step="1"
-                              required
-                              placeholder="0"
-                              className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100"
-                            />
-                            <p className="mt-2 text-sm text-slate-500">
-                              Se descuenta automaticamente cuando una compra queda aprobada.
-                            </p>
                           </div>
                         </div>
                       </section>

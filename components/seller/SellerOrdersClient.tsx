@@ -1,14 +1,7 @@
 "use client";
-
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import Swal from "sweetalert2";
 import {
-  FiCheckCircle,
-  FiClock,
-  FiExternalLink,
   FiPackage,
-  FiTruck,
+  FiUser,
 } from "react-icons/fi";
 
 type FulfillmentStatus =
@@ -29,9 +22,6 @@ export type SellerOrder = {
   netAmount: number;
   status: SettlementStatus;
   fulfillmentStatus: FulfillmentStatus;
-  shippingCarrier: string | null;
-  trackingCode: string | null;
-  trackingUrl: string | null;
   sellerNotes: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
@@ -47,13 +37,6 @@ export type SellerOrder = {
     buyerName: string | null;
     buyerEmail: string | null;
     buyerPhone: string | null;
-    shippingStreet: string | null;
-    shippingNumber: string | null;
-    shippingApartment: string | null;
-    shippingCity: string | null;
-    shippingState: string | null;
-    shippingPostalCode: string | null;
-    shippingCountry: string | null;
     shippingNotes: string | null;
     items: Array<{
       id: string;
@@ -89,11 +72,11 @@ function formatDate(value: string | null) {
 function statusLabel(status: FulfillmentStatus) {
   const labels: Record<FulfillmentStatus, string> = {
     CANCELED: "Cancelado",
-    DELIVERY_REQUESTED: "Entregado por revisar",
-    DELIVERED: "Entregado",
+    DELIVERY_REQUESTED: "Acceso por revisar",
+    DELIVERED: "Acceso habilitado",
     PENDING: "Pendiente",
-    PREPARING: "Preparando",
-    SHIPPED: "Enviado",
+    PREPARING: "Preparando acceso",
+    SHIPPED: "Acceso enviado",
   };
 
   return labels[status];
@@ -143,21 +126,6 @@ function fulfillmentPriority(status: FulfillmentStatus) {
   return priorities[status];
 }
 
-function shippingAddress(order: SellerOrder["order"]) {
-  return [
-    order.shippingStreet && order.shippingNumber
-      ? `${order.shippingStreet} ${order.shippingNumber}`
-      : order.shippingStreet,
-    order.shippingApartment,
-    order.shippingCity,
-    order.shippingState,
-    order.shippingPostalCode,
-    order.shippingCountry,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
 export default function SellerOrdersClient({
   orders,
   canConfirmDelivery = false,
@@ -169,12 +137,6 @@ export default function SellerOrdersClient({
   showActiveSection?: boolean;
   showPaidSection?: boolean;
 }) {
-  const router = useRouter();
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [orderError, setOrderError] = useState<{
-    id: string;
-    text: string;
-  } | null>(null);
   const activeOrders = orders
     .filter((order) => order.status !== "PAID")
     .toSorted((first, second) => {
@@ -191,88 +153,10 @@ export default function SellerOrdersClient({
     });
   const paidOrders = orders.filter((order) => order.status === "PAID");
 
-  async function updateFulfillment(
-    settlement: SellerOrder,
-    formData: FormData,
-    fulfillmentStatus: FulfillmentStatus
-  ) {
-    setSavingId(settlement.id);
-    setOrderError(null);
-
-    const payload = {
-      fulfillmentStatus,
-      shippingCarrier: String(formData.get("shippingCarrier") || ""),
-      trackingCode: String(formData.get("trackingCode") || ""),
-      trackingUrl: String(formData.get("trackingUrl") || ""),
-      sellerNotes: String(formData.get("sellerNotes") || ""),
-    };
-
-    try {
-      const res = await fetch(`/api/seller/settlements/${settlement.id}/fulfillment`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "No se pudo actualizar el envio");
-      }
-
-      router.refresh();
-    } catch (error) {
-      setOrderError({
-        id: settlement.id,
-        text: error instanceof Error ? error.message : "Ocurrio un error",
-      });
-    } finally {
-      setSavingId(null);
-    }
-  }
-
-  async function requestDeliveryReview(
-    settlement: SellerOrder,
-    form: HTMLFormElement | null
-  ) {
-    const result = await Swal.fire({
-      title: "Estas seguro que el pedido fue entregado?",
-      text: "La plataforma lo va a revisar antes de liberar el pago.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Si, solicitar revision",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#0f172a",
-      cancelButtonColor: "#64748b",
-      reverseButtons: true,
-    });
-
-    if (!result.isConfirmed) return;
-
-    await updateFulfillment(
-      settlement,
-      new FormData(form ?? undefined),
-      "DELIVERY_REQUESTED"
-    );
-  }
-
   function renderOrderCard(settlement: SellerOrder) {
-          const lockedForSeller =
-            !canConfirmDelivery &&
-            (settlement.fulfillmentStatus === "DELIVERED" ||
-              settlement.fulfillmentStatus === "DELIVERY_REQUESTED");
-
           return (
-            <form
+            <article
               key={settlement.id}
-              action={(formData) =>
-                updateFulfillment(
-                  settlement,
-                  formData,
-                  settlement.fulfillmentStatus === "PENDING"
-                    ? "PREPARING"
-                    : settlement.fulfillmentStatus
-                )
-              }
               className="rounded-lg border border-slate-200 bg-white shadow-sm"
             >
             <div className="flex flex-col gap-4 border-b border-slate-100 p-5 xl:flex-row xl:items-start xl:justify-between">
@@ -295,7 +179,7 @@ export default function SellerOrdersClient({
                 </div>
 
                 <h2 className="mt-3 truncate text-lg font-semibold text-slate-950">
-                  Orden {settlement.order.id.slice(-8)}
+                  Venta digital {settlement.order.id.slice(-8)}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Pagada el {formatDate(settlement.createdAt)}
@@ -353,11 +237,6 @@ export default function SellerOrdersClient({
                               Talle {item.selectedSize}
                             </span>
                           )}
-                          {item.selectedColor && (
-                            <span className="mt-0.5 block text-xs font-semibold text-slate-600">
-                              Color {item.selectedColor}
-                            </span>
-                          )}
                         </span>
                         <span className="shrink-0 font-semibold">
                           x{item.quantity}
@@ -382,11 +261,11 @@ export default function SellerOrdersClient({
               <div className="space-y-4">
                 <div>
                   <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                    <FiTruck />
-                    Entrega
+                    <FiUser />
+                    Datos de acceso
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600">
-                    {shippingAddress(settlement.order) || "Sin direccion cargada"}
+                    Usa el email o telefono del comprador para enviar licencia, archivo, acceso o instrucciones del producto digital.
                   </p>
                   {settlement.order.shippingNotes && (
                     <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-800">
@@ -394,149 +273,16 @@ export default function SellerOrdersClient({
                     </p>
                   )}
                 </div>
-
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <label className="text-sm font-medium text-slate-700">
-                    Empresa de envio
-                    <input
-                      name="shippingCarrier"
-                      defaultValue={settlement.shippingCarrier ?? ""}
-                      disabled={lockedForSeller}
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                      placeholder="Ej: DAC, UES, Correo o Envio propio"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Codigo de tracking
-                    <input
-                      name="trackingCode"
-                      defaultValue={settlement.trackingCode ?? ""}
-                      disabled={lockedForSeller}
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                      placeholder="Codigo de guia o referencia interna"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-1">
-                    Link de tracking
-                    <input
-                      name="trackingUrl"
-                      defaultValue={settlement.trackingUrl ?? ""}
-                      disabled={lockedForSeller}
-                      className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                      placeholder="https://..."
-                    />
-                  </label>
-                </div>
               </div>
 
               <div className="space-y-4">
-                <label className="text-sm font-medium text-slate-700">
-                  Nota para la entrega
-                  <textarea
-                    name="sellerNotes"
-                    defaultValue={settlement.sellerNotes ?? ""}
-                    rows={5}
-                    disabled={lockedForSeller}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                    placeholder="Observaciones o evidencia si el envio es propio"
-                  />
-                </label>
-
                 <div className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-                  <p>Enviado: {formatDate(settlement.shippedAt)}</p>
-                  <p>Entregado: {formatDate(settlement.deliveredAt)}</p>
-                </div>
-
-                {settlement.trackingUrl && (
-                  <a
-                    href={settlement.trackingUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 hover:text-orange-700"
-                  >
-                    Abrir tracking
-                    <FiExternalLink />
-                  </a>
-                )}
-
-                {orderError?.id === settlement.id && (
-                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-                    {orderError.text}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap justify-end gap-2">
-                  <button
-                    type="submit"
-                    disabled={savingId === settlement.id || lockedForSeller}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-                  >
-                    <FiClock />
-                    Marcar Preparando
-                  </button>
-                  <button
-                    type="button"
-                    disabled={
-                      savingId === settlement.id ||
-                      settlement.fulfillmentStatus === "DELIVERED" ||
-                      settlement.fulfillmentStatus === "DELIVERY_REQUESTED"
-                    }
-                    onClick={(event) =>
-                      updateFulfillment(
-                        settlement,
-                        new FormData(event.currentTarget.form ?? undefined),
-                        "SHIPPED"
-                      )
-                    }
-                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                  >
-                    <FiTruck />
-                    Marcar enviado
-                  </button>
-                  {canConfirmDelivery && (
-                    <button
-                      type="button"
-                      disabled={
-                        savingId === settlement.id ||
-                        settlement.fulfillmentStatus === "DELIVERED"
-                      }
-                      onClick={(event) =>
-                        updateFulfillment(
-                          settlement,
-                          new FormData(event.currentTarget.form ?? undefined),
-                          "DELIVERED"
-                        )
-                      }
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                    >
-                      Confirmar entrega
-                    </button>
-                  )}
-                  {!canConfirmDelivery && (
-                    <button
-                      type="button"
-                      disabled={
-                        savingId === settlement.id ||
-                        settlement.fulfillmentStatus === "DELIVERY_REQUESTED" ||
-                        settlement.fulfillmentStatus === "DELIVERED" ||
-                        settlement.fulfillmentStatus === "CANCELED"
-                      }
-                      onClick={(event) =>
-                        requestDeliveryReview(
-                          settlement,
-                          event.currentTarget.form
-                        )
-                      }
-                      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                    >
-                      <FiCheckCircle />
-                      Cliente recibio la compra
-                    </button>
-                  )}
+                  <p>Venta: {formatDate(settlement.createdAt)}</p>
+                  <p>Acceso: {formatDate(settlement.deliveredAt)}</p>
                 </div>
               </div>
             </div>
-          </form>
+          </article>
           );
   }
 
@@ -544,7 +290,7 @@ export default function SellerOrdersClient({
     <div className="space-y-8">
       {orders.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-          Todavia no hay pedidos pagos para gestionar.
+          Todavia no hay ventas digitales pagas para gestionar.
         </div>
       ) : (
         <>
@@ -553,10 +299,10 @@ export default function SellerOrdersClient({
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">
-                  Pedidos en gestion
+                  Ventas por liquidar
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Ordenes pendientes de entrega, revision o liquidacion.
+                  Ventas digitales pendientes de liquidacion.
                 </p>
               </div>
               <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
@@ -566,7 +312,7 @@ export default function SellerOrdersClient({
 
             {activeOrders.length === 0 ? (
               <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
-                No hay pedidos pendientes de gestion.
+                No hay ventas pendientes de gestion.
               </div>
             ) : (
               <div className="space-y-4">
@@ -581,10 +327,10 @@ export default function SellerOrdersClient({
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">
-                  Ordenes ya liquidadas
+                  Ventas ya liquidadas
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Historial de pedidos cuyo pago ya fue liquidado.
+                  Historial de ventas cuyo pago ya fue liquidado.
                 </p>
               </div>
               <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
@@ -594,7 +340,7 @@ export default function SellerOrdersClient({
 
             {paidOrders.length === 0 ? (
               <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
-                Todavia no hay ordenes liquidadas.
+                Todavia no hay ventas liquidadas.
               </div>
             ) : (
               <div className="space-y-4">

@@ -106,12 +106,12 @@ function statusLabel(status: string) {
     APPROVED: "Aprobada",
     AVAILABLE: "Disponible",
     CANCELED: "Cancelada",
-    DELIVERY_REQUESTED: "Entregado por revisar",
-    DELIVERED: "Entregada",
+    DELIVERY_REQUESTED: "Acceso por revisar",
+    DELIVERED: "Acceso habilitado",
     PAID: "Pagada",
     PENDING: "Pendiente",
-    PREPARING: "Preparando",
-    SHIPPED: "Enviada",
+    PREPARING: "Preparando acceso",
+    SHIPPED: "Acceso enviado",
   };
 
   return labels[status] ?? status;
@@ -138,7 +138,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
     if (reason === null) return;
 
     const confirmed = window.confirm(
-      "Vas a cancelar la orden, anular comisiones/liquidaciones y devolver stock si corresponde. Continuar?"
+      "Vas a cancelar la venta y anular comisiones/liquidaciones. Continuar?"
     );
 
     if (!confirmed) return;
@@ -155,7 +155,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "No se pudo cancelar la orden");
+        throw new Error(data?.error || "No se pudo cancelar la venta");
       }
 
       router.refresh();
@@ -176,7 +176,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
 
       {orders.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
-          Todavia no hay ordenes registradas.
+          Todavia no hay ventas registradas.
         </div>
       ) : (
         orders.map((order) => {
@@ -210,7 +210,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
                     )}
                   </div>
                   <h2 className="mt-3 text-lg font-semibold text-slate-950">
-                    Orden {order.id.slice(-8)}
+                    Venta digital {order.id.slice(-8)}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {formatDate(order.createdAt)} · {order.paymentProvider ?? "Sin proveedor"}
@@ -232,7 +232,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
                     title={
                       canCancel
                         ? "Cancelar o marcar reembolso"
-                        : "No disponible para esta orden"
+                        : "No disponible para esta venta"
                     }
                   >
                     <FiRefreshCcw />
@@ -336,7 +336,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
                     ))}
                     {order.settlements.length === 0 && (
                       <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
-                        Esta orden aun no tiene liquidaciones asociadas.
+                        Esta venta aun no tiene liquidaciones asociadas.
                       </p>
                     )}
                   </div>

@@ -2,40 +2,33 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  PRODUCT_COLOR_PRESETS,
-  parseProductColors,
-  type ProductColorOption,
-} from "@/lib/product-color";
 import { formatMoney, getSellerNetAmount } from "@/lib/pricing";
 
 const productCategories = [
-  { value: "CLOTHING", label: "Ropa", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
-  {
-    value: "SHOES",
-    label: "Calzado",
-    sizes: ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44"],
-  },
-  { value: "ACCESSORIES", label: "Accesorios", sizes: [] },
-  { value: "BEAUTY", label: "Belleza", sizes: [] },
-  { value: "HOME", label: "Hogar", sizes: [] },
   { value: "DIGITAL", label: "Digital", sizes: [] },
-  { value: "OTHER", label: "Otro", sizes: [] },
 ] as const;
 
-const categoriesWithSizes = new Set(["CLOTHING", "SHOES"]);
+const categoriesWithSizes = new Set<string>();
 
-type ProductCategory = (typeof productCategories)[number]["value"];
+type ProductCategory =
+  | "CLOTHING"
+  | "SHOES"
+  | "ACCESSORIES"
+  | "BEAUTY"
+  | "HOME"
+  | "DIGITAL"
+  | "OTHER";
 
 type ProductFormProduct = {
   id: string;
   name: string;
   desc: string | null;
+  digitalAccessInstructions: string | null;
   price: number;
   stock: number;
   category: ProductCategory;
   sizes: string[];
-  colors: ProductColorOption[] | unknown;
+  colors: unknown;
   imageUrls: string[];
   isActive: boolean;
   commissionValue: number;
@@ -51,18 +44,15 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
   const [form, setForm] = useState({
     name: product.name,
     desc: product.desc ?? "",
+    digitalAccessInstructions: product.digitalAccessInstructions ?? "",
     price: String(product.price),
-    stock: String(product.stock),
-    category: product.category,
-    sizes: product.sizes,
-    colors: parseProductColors(product.colors),
+    category: "DIGITAL" as ProductCategory,
+    sizes: [] as string[],
     imageUrls: product.imageUrls,
     isActive: product.isActive,
     commissionValue: String(product.commissionValue),
   });
   const [customSize, setCustomSize] = useState("");
-  const [customColorName, setCustomColorName] = useState("");
-  const [customColorHex, setCustomColorHex] = useState("#111827");
 
   const selectedCategory = useMemo(
     () => productCategories.find((item) => item.value === form.category),
@@ -117,24 +107,6 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     setCustomSize("");
   }
 
-  function toggleColor(color: ProductColorOption) {
-    setField(
-      "colors",
-      form.colors.some((item) => item.name.toLowerCase() === color.name.toLowerCase())
-        ? form.colors.filter((item) => item.name.toLowerCase() !== color.name.toLowerCase())
-        : [...form.colors, color]
-    );
-  }
-
-  function addCustomColor() {
-    const name = customColorName.trim();
-    if (!name) return;
-
-    toggleColor({ name, hex: customColorHex });
-    setCustomColorName("");
-    setCustomColorHex("#111827");
-  }
-
   async function addImages(files: FileList | null) {
     if (!files?.length) return;
 
@@ -168,11 +140,11 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     const payload = {
       name: form.name,
       desc: form.desc,
+      digitalAccessInstructions: form.digitalAccessInstructions,
       price: Number(form.price),
-      stock: Number(form.stock),
-      category: form.category,
-      sizes: shouldShowSizes ? form.sizes : [],
-      colors: form.colors,
+      category: "DIGITAL",
+      sizes: [],
+      colors: [],
       imageUrls: form.imageUrls,
       isActive: form.isActive,
       commissionValue: Number(form.commissionValue),
@@ -232,108 +204,6 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
           />
         </div>
 
-        <div>
-          <label className="text-sm font-medium text-slate-700">Stock</label>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={form.stock}
-            onChange={(e) => setField("stock", e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-            required
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            Se descuenta automaticamente cuando una compra queda aprobada.
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900">Colores</h2>
-          <p className="text-sm text-slate-500">
-            Opcional. Si no agregas ninguno, el producto queda sin variante de color.
-          </p>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {PRODUCT_COLOR_PRESETS.map((color) => (
-            <button
-              key={color.name}
-              type="button"
-              onClick={() => toggleColor(color)}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                form.colors.some((item) => item.name.toLowerCase() === color.name.toLowerCase())
-                  ? "border-slate-950 bg-white text-slate-950 ring-2 ring-slate-200"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-              }`}
-            >
-              <span
-                className="h-4 w-4 rounded-full border border-slate-300"
-                style={{ backgroundColor: color.hex }}
-              />
-              {color.name}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-          <input
-            value={customColorName}
-            onChange={(e) => setCustomColorName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addCustomColor();
-              }
-            }}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2"
-            placeholder="Ej: Negro, Azul marino, Beige"
-            maxLength={40}
-          />
-          <div className="flex gap-2">
-            <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-              <span
-                className="h-5 w-5 rounded-full border border-slate-300"
-                style={{ backgroundColor: customColorHex }}
-              />
-              <input
-                type="color"
-                value={customColorHex}
-                onChange={(e) => setCustomColorHex(e.target.value)}
-                className="h-8 w-10 cursor-pointer border-0 bg-transparent p-0"
-                aria-label="Elegir color"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={addCustomColor}
-              className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Agregar
-            </button>
-          </div>
-        </div>
-
-        {form.colors.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {form.colors.map((color) => (
-              <button
-                key={`${color.name}-${color.hex}`}
-                type="button"
-                onClick={() => toggleColor(color)}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
-              >
-                <span
-                  className="h-3.5 w-3.5 rounded-full border border-slate-300"
-                  style={{ backgroundColor: color.hex }}
-                />
-                {color.name} x
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div>
@@ -346,27 +216,28 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
         />
       </div>
 
+      <div>
+        <label className="text-sm font-medium text-slate-700">
+          Acceso al producto digital
+        </label>
+        <textarea
+          value={form.digitalAccessInstructions}
+          onChange={(e) => setField("digitalAccessInstructions", e.target.value)}
+          rows={5}
+          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          placeholder="Ej: Link del curso, pasos para crear usuario, email de soporte, instrucciones para activar la licencia."
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Esta informacion se envia al comprador cuando el pago queda confirmado.
+        </p>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label className="text-sm font-medium text-slate-700">Categoria</label>
-          <select
-            value={form.category}
-            onChange={(e) => {
-              const nextCategory = e.target.value as ProductCategory;
-              setForm((current) => ({
-                ...current,
-                category: nextCategory,
-                sizes: categoriesWithSizes.has(nextCategory) ? current.sizes : [],
-              }));
-            }}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          >
-            {productCategories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-900">
+            Digital
+          </div>
         </div>
 
         <div>

@@ -107,22 +107,22 @@ export default async function AdminOrdersPage() {
                   Plataforma
                 </p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                  Ordenes
+                  Ventas digitales
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Revisa todas las ordenes y cancela casos reembolsados cuando corresponda.
+                  Revisa todas las ventas digitales y cancela casos reembolsados cuando corresponda.
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-                {orders.length} ordenes registradas
+                {orders.length} ventas registradas
               </div>
             </div>
 
             <section className="mt-8">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-slate-950">
-                  Todas las ordenes
+                  Todas las ventas
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
                   Historial completo de compras, pagos, sellers y liquidaciones.

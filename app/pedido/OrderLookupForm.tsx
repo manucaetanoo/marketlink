@@ -14,7 +14,7 @@ export default function OrderLookupForm() {
 
     const cleanOrderId = orderId.trim();
     if (!cleanOrderId) {
-      setError("Ingresa el numero de pedido para consultar el estado.");
+      setError("Ingresa el numero de compra para consultar el acceso.");
       return;
     }
 
@@ -24,7 +24,7 @@ export default function OrderLookupForm() {
   return (
     <form onSubmit={handleSubmit} className="mt-8 w-full max-w-xl">
       <label htmlFor="orderId" className="block text-sm font-semibold text-slate-800">
-        Numero de pedido
+        Numero de compra
       </label>
       <div className="mt-2 flex flex-col gap-3 sm:flex-row">
         <input

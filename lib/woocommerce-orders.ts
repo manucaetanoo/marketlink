@@ -16,14 +16,12 @@ function getWooCommerceVariationId({
   fallbackVariationId,
   variants,
   selectedSize,
-  selectedColor,
 }: {
   fallbackVariationId: string | null;
   variants: unknown;
   selectedSize?: string | null;
-  selectedColor?: string | null;
 }) {
-  const selectedOptions = [selectedSize, selectedColor]
+  const selectedOptions = [selectedSize]
     .map((value) => value?.trim().toUpperCase())
     .filter((value): value is string => Boolean(value));
 
@@ -217,7 +215,6 @@ export async function syncWooCommerceOrder(orderId: string) {
             fallbackVariationId: item.product.wooCommerceVariationId,
             variants: item.product.wooCommerceVariants,
             selectedSize: item.selectedSize,
-            selectedColor: item.selectedColor,
           });
 
           return {
@@ -229,9 +226,6 @@ export async function syncWooCommerceOrder(orderId: string) {
               { key: "afilink_order_item_id", value: item.id },
               item.selectedSize
                 ? { key: "afilink_selected_size", value: item.selectedSize }
-                : undefined,
-              item.selectedColor
-                ? { key: "afilink_selected_color", value: item.selectedColor }
                 : undefined,
             ],
           };

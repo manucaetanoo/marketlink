@@ -21,7 +21,7 @@ export default function LoginPage() {
     const safeCallbackUrl =
       callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
         ? callbackUrl
-        : "/products";
+        : "/inicio";
 
     const res = await signIn("credentials", {
       email,

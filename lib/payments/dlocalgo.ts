@@ -38,11 +38,11 @@ type ShippingData = {
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string;
-  shippingStreet: string;
-  shippingNumber: string;
+  shippingStreet?: string | null;
+  shippingNumber?: string | null;
   shippingApartment: string | null;
-  shippingCity: string;
-  shippingState: string;
+  shippingCity?: string | null;
+  shippingState?: string | null;
   shippingPostalCode: string | null;
   shippingCountry: string;
   shippingNotes: string | null;
@@ -243,21 +243,22 @@ export async function createDlocalGoPayment(
       last_name: lastNameParts.join(" ") || undefined,
       email: shippingData?.buyerEmail || order.buyerEmail || undefined,
       phone: shippingData?.buyerPhone || order.buyerPhone || undefined,
-      address: {
+      address: cleanUndefined({
         state: shippingData?.shippingState || order.shippingState || undefined,
         city: shippingData?.shippingCity || order.shippingCity || undefined,
         zip_code:
           shippingData?.shippingPostalCode ||
           order.shippingPostalCode ||
           undefined,
-        full_address: [
-          shippingData?.shippingStreet || order.shippingStreet,
-          shippingData?.shippingNumber || order.shippingNumber,
-          shippingData?.shippingApartment || order.shippingApartment,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      },
+        full_address:
+          [
+            shippingData?.shippingStreet || order.shippingStreet,
+            shippingData?.shippingNumber || order.shippingNumber,
+            shippingData?.shippingApartment || order.shippingApartment,
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined,
+      }),
     },
   });
 
@@ -317,18 +318,19 @@ export async function createDlocalGoDraftPayment({
       last_name: lastNameParts.join(" ") || undefined,
       email: shippingData.buyerEmail,
       phone: shippingData.buyerPhone,
-      address: {
-        state: shippingData.shippingState,
-        city: shippingData.shippingCity,
+      address: cleanUndefined({
+        state: shippingData.shippingState || undefined,
+        city: shippingData.shippingCity || undefined,
         zip_code: shippingData.shippingPostalCode || undefined,
-        full_address: [
-          shippingData.shippingStreet,
-          shippingData.shippingNumber,
-          shippingData.shippingApartment,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      },
+        full_address:
+          [
+            shippingData.shippingStreet,
+            shippingData.shippingNumber,
+            shippingData.shippingApartment,
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined,
+      }),
     },
   });
 

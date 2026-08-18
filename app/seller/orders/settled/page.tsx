@@ -37,9 +37,6 @@ export default async function SettledSellerOrdersPage() {
       netAmount: true,
       status: true,
       fulfillmentStatus: true,
-      shippingCarrier: true,
-      trackingCode: true,
-      trackingUrl: true,
       sellerNotes: true,
       shippedAt: true,
       deliveredAt: true,
@@ -51,13 +48,6 @@ export default async function SettledSellerOrdersPage() {
           buyerName: true,
           buyerEmail: true,
           buyerPhone: true,
-          shippingStreet: true,
-          shippingNumber: true,
-          shippingApartment: true,
-          shippingCity: true,
-          shippingState: true,
-          shippingPostalCode: true,
-          shippingCountry: true,
           shippingNotes: true,
           items: {
             where: {
@@ -112,10 +102,10 @@ export default async function SettledSellerOrdersPage() {
                   Historial
                 </p>
                 <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                  Ordenes ya liquidadas
+                  Ventas ya liquidadas
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Consulta pedidos cuyo pago ya fue liquidado.
+                  Consulta ventas digitales cuyo pago ya fue liquidado.
                 </p>
               </div>
 
@@ -123,7 +113,7 @@ export default async function SettledSellerOrdersPage() {
                 href="/seller/orders"
                 className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100"
               >
-                Volver a pedidos activos
+                Volver a ventas activas
               </Link>
             </div>
 

@@ -2,20 +2,13 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
-import { normalizeProductColors } from "@/lib/product-color";
 import { normalizeProductImageUrls } from "@/lib/product-images";
 
 const productCategories = [
-  "CLOTHING",
-  "SHOES",
-  "ACCESSORIES",
-  "BEAUTY",
-  "HOME",
   "DIGITAL",
-  "OTHER",
 ] as const;
 
-const categoriesWithSizes = new Set(["CLOTHING", "SHOES"]);
+const categoriesWithSizes = new Set<string>();
 const SELLER_PRODUCTS_LIMIT = 100;
 const MAX_SELLER_PRODUCTS_TAKE = 100;
 
@@ -66,6 +59,7 @@ export async function GET(req: Request) {
           id: true,
           name: true,
           desc: true,
+          digitalAccessInstructions: true,
           price: true,
           stock: true,
           category: true,
@@ -119,12 +113,14 @@ export async function POST(req: Request) {
 
     const name = String(body.name ?? "").trim();
     const desc = String(body.desc ?? "").trim();
+    const digitalAccessInstructions = String(
+      body.digitalAccessInstructions ?? ""
+    ).trim();
     const price = Number(body.price);
-    const stock = Number(body.stock ?? 0);
+    const stock = 0;
     const commissionValue = Number(body.commissionValue);
-    const category = String(body.category ?? "OTHER").trim().toUpperCase();
+    const category = "DIGITAL";
     const sizes = normalizeSizes(body.sizes);
-    const colors = normalizeProductColors(body.colors);
 
     const imageUrls = normalizeProductImageUrls(body.imageUrls);
 
@@ -142,13 +138,6 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!Number.isInteger(stock) || stock < 0) {
-      return NextResponse.json(
-        { ok: false, error: "Stock invalido" },
-        { status: 400 }
-      );
-    }
-
     if (!Number.isFinite(commissionValue) || commissionValue <= 0 || commissionValue > 100) {
       return NextResponse.json(
         { ok: false, error: "Comision invalida" },
@@ -158,7 +147,7 @@ export async function POST(req: Request) {
 
     if (!productCategories.includes(category as (typeof productCategories)[number])) {
       return NextResponse.json(
-        { ok: false, error: "Categoria invalida" },
+        { ok: false, error: "Solo se pueden publicar productos digitales" },
         { status: 400 }
       );
     }
@@ -183,11 +172,14 @@ export async function POST(req: Request) {
         sellerId: user.id,
         name,
         desc: desc.length ? desc : null,
+        digitalAccessInstructions: digitalAccessInstructions.length
+          ? digitalAccessInstructions
+          : null,
         price,
         stock,
         category: category as (typeof productCategories)[number],
         sizes: categoriesWithSizes.has(category) ? sizes : [],
-        colors: colors.length ? colors : undefined,
+        colors: [],
         commissionValue,
         commissionType: "PERCENT",
         platformCommissionValue: sellerSettings.platformCommissionValue,

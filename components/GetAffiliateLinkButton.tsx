@@ -7,6 +7,7 @@ type Props = {
   affiliateId: string;
   endpoint?: string;
   className?: string;
+  idleLabel?: string;
 };
 
 function getErrorMessage(error: unknown) {
@@ -18,6 +19,7 @@ export default function GetAffiliateLinkButton({
   affiliateId,
   endpoint = "/api/affiliate-links",
   className,
+  idleLabel = "Promocionar este producto",
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -64,7 +66,7 @@ export default function GetAffiliateLinkButton({
           ? "Generando..."
           : copied
             ? "Copiado"
-            : "Promocionar este producto"}
+            : idleLabel}
       </button>
 
       {lastUrl && (

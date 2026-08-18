@@ -7,7 +7,6 @@ import {
   FiBarChart2,
   FiClock,
   FiDollarSign,
-  FiExternalLink,
   FiLink,
   FiMousePointer,
   FiShoppingBag,
@@ -138,7 +137,7 @@ function MiniBar({
 
 const getAffiliateDashboardData = unstable_cache(
   async (affiliateId: string) => {
-    const [links, campaignLinks, commissions, orderItems, pendingPayoutRequest] =
+    const [links, commissions, orderItems, pendingPayoutRequest] =
       await Promise.all([
         prisma.affiliateLink.findMany({
           where: { affiliateId },
@@ -153,24 +152,6 @@ const getAffiliateDashboardData = unstable_cache(
                 price: true,
                 commissionValue: true,
                 commissionType: true,
-              },
-            },
-            _count: { select: { clicks: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        }),
-        prisma.affiliateCampaignLink.findMany({
-          where: { affiliateId },
-          select: {
-            id: true,
-            code: true,
-            createdAt: true,
-            campaign: {
-              select: {
-                id: true,
-                title: true,
-                slug: true,
-                isActive: true,
               },
             },
             _count: { select: { clicks: true } },
@@ -230,7 +211,7 @@ const getAffiliateDashboardData = unstable_cache(
           select: { id: true },
         }),
       ]);
-    return { links, campaignLinks, commissions, orderItems, pendingPayoutRequest };
+    return { links, commissions, orderItems, pendingPayoutRequest };
   },
   ["affiliate-dashboard"],
   { revalidate: 30 }
@@ -250,47 +231,24 @@ export default async function AffiliateDashboardPage() {
   const previousStart = new Date(now);
   previousStart.setDate(previousStart.getDate() - 60);
 
-  const { links, campaignLinks, commissions, orderItems, pendingPayoutRequest } =
+  const { links, commissions, orderItems, pendingPayoutRequest } =
     await getAffiliateDashboardData(affiliateId);
 
   const productClicks = links.reduce((total, link) => total + link._count.clicks, 0);
-  const campaignClicks = campaignLinks.reduce(
-    (total, link) => total + link._count.clicks,
-    0
-  );
-  const totalClicks = productClicks + campaignClicks;
+  const totalClicks = productClicks;
   const paidItems = orderItems.filter((item) => item.order.status === "PAID");
   const totalSales = paidItems.length;
   const paidOrderCommissions = commissions.filter(
     (commission) => commission.order.status === "PAID"
   );
-  const isDeliveryConfirmedForCommission = (commission: (typeof commissions)[number]) =>
-    commission.order.settlements.some(
-      (settlement) =>
-        settlement.sellerId === commission.orderItem?.sellerId &&
-        settlement.status === "AVAILABLE" &&
-        settlement.fulfillmentStatus === "DELIVERED"
-    );
   const availableCommission = paidOrderCommissions
-    .filter(
-      (commission) =>
-        commission.status === "APPROVED" &&
-        isDeliveryConfirmedForCommission(commission)
-    )
+    .filter((commission) => commission.status === "APPROVED")
     .reduce((total, commission) => total + commission.amount, 0);
   const retainedCommission = paidOrderCommissions
-    .filter(
-      (commission) =>
-        commission.status === "PENDING" ||
-        (commission.status === "APPROVED" &&
-          !isDeliveryConfirmedForCommission(commission))
-    )
+    .filter((commission) => commission.status === "PENDING")
     .reduce((total, commission) => total + commission.amount, 0);
   const retainedCommissionCount = paidOrderCommissions.filter(
-    (commission) =>
-      commission.status === "PENDING" ||
-      (commission.status === "APPROVED" &&
-        !isDeliveryConfirmedForCommission(commission))
+    (commission) => commission.status === "PENDING"
   ).length;
   const paidCommission = paidOrderCommissions
     .filter((commission) => commission.status === "PAID")
@@ -312,13 +270,6 @@ export default async function AffiliateDashboardPage() {
       href: `${baseUrl}/l/${link.code}`,
       clicks: link._count.clicks,
       type: "Producto",
-    })),
-    ...campaignLinks.map((link) => ({
-      id: link.id,
-      label: link.campaign.title,
-      href: `${baseUrl}/cl/${link.code}`,
-      clicks: link._count.clicks,
-      type: "Campaña",
     })),
   ]
     .sort((a, b) => b.clicks - a.clicks)
@@ -362,30 +313,8 @@ export default async function AffiliateDashboardPage() {
                   <FiLink />
                   Generar link
                 </Link>
-                <Link
-                  href="/campaigns"
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                >
-                  <FiExternalLink />
-                  Ver campañas
-                </Link>
               </div>
             </div>
-
-            {retainedCommission > 0 && (
-              <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
-                <p className="text-sm font-medium text-amber-950">
-                  Liquidacion pendiente por entrega
-                </p>
-                <p className="mt-1 text-sm leading-6 text-amber-900">
-                  Tenes {money(retainedCommission)} retenidos en{" "}
-                  {number(retainedCommissionCount)} comisiones pendientes. La
-                  liquidacion del pago va a estar disponible 7 dias despues de la
-                  acreditacion y cuando se confirme la entrega.
-
-                </p>
-              </div>
-            )}
 
             <section
               id="payments"
@@ -395,7 +324,7 @@ export default async function AffiliateDashboardPage() {
                 icon={<FiMousePointer />}
                 label="Clicks totales"
                 value={number(totalClicks)}
-                detail={`${number(productClicks)} en productos, ${number(campaignClicks)} en campañas`}
+                detail={`${number(productClicks)} en links de producto`}
                 tone="orange"
               />
               <StatCard
@@ -416,7 +345,7 @@ export default async function AffiliateDashboardPage() {
                 icon={<FiClock />}
                 label="Retenido"
                 value={money(retainedCommission)}
-                detail={`${number(retainedCommissionCount)} comisiones pendientes de entrega`}
+                detail={`${number(retainedCommissionCount)} comisiones pendientes`}
                 tone="slate"
               />
               <StatCard
@@ -463,7 +392,7 @@ export default async function AffiliateDashboardPage() {
                     <p className="text-sm leading-6 text-orange-900">
                       Tus mejores oportunidades son los links con mayor volumen de
                       clicks y comision generada. Tenes {money(retainedCommission)} en
-                      comisiones retenidas hasta que se confirme la entrega.
+                      comisiones pendientes de validacion.
                     </p>
                   </div>
                 </div>
@@ -480,8 +409,8 @@ export default async function AffiliateDashboardPage() {
                 <div className="mt-5 space-y-5">
                   {topLinks.length === 0 ? (
                     <p className="text-sm leading-6 text-slate-500">
-                      Todavia no generaste links. Cuando compartas productos o
-                      campañas, vas a ver aca tus mejores fuentes de clicks.
+                      Todavia no generaste links. Cuando compartas productos, vas
+                      a ver aca tus mejores fuentes de clicks.
                     </p>
                   ) : (
                     topLinks.map((link) => (
@@ -508,7 +437,7 @@ export default async function AffiliateDashboardPage() {
                       Links recientes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Productos y campañas que ya puedes compartir.
+                      Productos que ya puedes compartir.
                     </p>
                   </div>
                   <Link

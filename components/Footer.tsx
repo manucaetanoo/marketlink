@@ -15,9 +15,7 @@ type Navigation = {
 const navigation: Navigation = {
   marketplace: [
     { name: "Productos", href: "/products" },
-    { name: "Campañas", href: "/campaigns" },
-    { name: "Tiendas", href: "/store" },
-    { name: "Seguir un pedido", href: "/pedido" },
+    { name: "Consultar compra", href: "/pedido" },
   ],
   sellers: [
     { name: "Crear cuenta", href: "/register" },

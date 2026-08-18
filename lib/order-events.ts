@@ -1,12 +1,11 @@
 import {
   CommissionStatus,
   OrderStatus,
+  SettlementStatus,
 } from "@/lib/prisma-enums";
 import { type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendTransactionalEmail } from "@/lib/email";
-import { syncShopifyOrder } from "@/lib/shopify-sync";
-import { syncWooCommerceOrder } from "@/lib/woocommerce-orders";
 
 type MarkOrderPaidInput = {
   orderId: string;
@@ -34,6 +33,42 @@ function getBaseUrl() {
   ).replace(/\/$/, "");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function accessInstructionsHtml(
+  instructions: Array<{ productName: string; instructions: string }>
+) {
+  if (instructions.length === 0) return "";
+
+  return `
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:18px;margin:20px 0;">
+            <p style="margin:0 0 12px;color:#9a3412;font-size:13px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
+              Acceso a tus productos digitales
+            </p>
+            ${instructions
+              .map(
+                (item) => `
+                  <div style="margin-top:14px;padding-top:14px;border-top:1px solid #fed7aa;">
+                    <p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#111827;">
+                      ${escapeHtml(item.productName)}
+                    </p>
+                    <p style="margin:0;white-space:pre-line;font-size:14px;line-height:1.7;color:#431407;">
+                      ${escapeHtml(item.instructions)}
+                    </p>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+  `;
+}
+
 export async function markOrderPaidAndNotify({
   orderId,
   buyerEmail,
@@ -51,6 +86,7 @@ export async function markOrderPaidAndNotify({
               select: {
                 id: true,
                 name: true,
+                digitalAccessInstructions: true,
               },
             },
             seller: {
@@ -88,19 +124,6 @@ export async function markOrderPaidAndNotify({
 
     const items = order.items;
     const effectiveBuyerEmail = buyerEmail ?? order.buyerEmail;
-    const shippingAddress = [
-      order.shippingStreet && order.shippingNumber
-        ? `${order.shippingStreet} ${order.shippingNumber}`
-        : order.shippingStreet,
-      order.shippingApartment,
-      order.shippingCity,
-      order.shippingState,
-      order.shippingPostalCode,
-      order.shippingCountry,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
     await tx.order.update({
       where: { id: order.id },
       data: {
@@ -110,38 +133,6 @@ export async function markOrderPaidAndNotify({
         paymentId: paymentId ?? order.paymentId ?? `pay_${order.id}`,
       },
     });
-
-    const stockByProduct = new Map<string, { name: string; quantity: number }>();
-
-    for (const item of items) {
-      const current = stockByProduct.get(item.product.id) ?? {
-        name: item.product.name,
-        quantity: 0,
-      };
-
-      current.quantity += item.quantity;
-      stockByProduct.set(item.product.id, current);
-    }
-
-    for (const [productId, item] of stockByProduct) {
-      const updated = await tx.product.updateMany({
-        where: {
-          id: productId,
-          stock: {
-            gte: item.quantity,
-          },
-        },
-        data: {
-          stock: {
-            decrement: item.quantity,
-          },
-        },
-      });
-
-      if (updated.count !== 1) {
-        throw new Error(`Stock insuficiente para ${item.name}`);
-      }
-    }
 
     for (const item of items) {
       if (item.affiliateId && item.affiliateAmount > 0) {
@@ -167,6 +158,15 @@ export async function markOrderPaidAndNotify({
     await tx.commission.updateMany({
       where: { orderId: order.id },
       data: { status: CommissionStatus.APPROVED },
+    });
+
+    await tx.settlement.updateMany({
+      where: { orderId: order.id },
+      data: {
+        status: SettlementStatus.AVAILABLE,
+        fulfillmentStatus: "DELIVERED",
+        deliveredAt: new Date(),
+      },
     });
 
     const sellerTotals = new Map<
@@ -250,11 +250,16 @@ export async function markOrderPaidAndNotify({
         buyerEmail: effectiveBuyerEmail,
         buyerName: order.buyerName,
         buyerPhone: order.buyerPhone,
-        shippingAddress,
         shippingNotes: order.shippingNotes,
         sellers: Array.from(sellerTotals.values()),
         affiliates: Array.from(affiliateTotals.values()),
         productNames: items.map((item) => item.product.name),
+        accessInstructions: items
+          .map((item) => ({
+            productName: item.product.name,
+            instructions: item.product.digitalAccessInstructions?.trim() ?? "",
+          }))
+          .filter((item) => item.instructions.length > 0),
       },
     };
   });
@@ -263,40 +268,14 @@ export async function markOrderPaidAndNotify({
     return result;
   }
 
-  const wooCommerceSync = await syncWooCommerceOrder(result.order.id).catch((error) => {
-    console.error("WooCommerce order sync error:", error);
-    return [];
-  });
-
-  for (const sync of wooCommerceSync) {
-    if (sync.status === "FAILED") {
-      console.error("WooCommerce order sync failed", {
-        orderId: result.order.id,
-        sellerId: sync.sellerId,
-        error: sync.error,
-      });
-    }
-  }
-
-  const shopifySync = await syncShopifyOrder(result.order.id).catch((error) => {
-    console.error("Shopify order sync error:", error);
-    return [];
-  });
-
-  for (const sync of shopifySync) {
-    if (sync.status === "FAILED") {
-      console.error("Shopify order sync failed", {
-        orderId: result.order.id,
-        sellerId: sync.sellerId,
-        error: sync.error,
-      });
-    }
-  }
-
   const baseUrl = getBaseUrl();
   const orderUrl = `${baseUrl}/pedido/${result.order.id}/`;
   const emailJobs: Promise<unknown>[] = [];
   const productList = result.order.productNames.join(", ");
+  const accessHtml = accessInstructionsHtml(result.order.accessInstructions);
+  const accessText = result.order.accessInstructions
+    .map((item) => `${item.productName}: ${item.instructions}`)
+    .join("\n\n");
 
   if (result.order.buyerEmail) {
     emailJobs.push(
@@ -341,8 +320,10 @@ export async function markOrderPaidAndNotify({
             </p>
           </div>
 
+          ${accessHtml}
+
           <p style="margin:20px 0;font-size:15px;line-height:1.6;color:#374151;">
-            Puedes revisar el detalle de tu compra y hacer seguimiento a tu pedido desde el siguiente botón:
+            Puedes revisar el detalle de tu compra desde el siguiente botón:
           </p>
 
           <div style="text-align:center;margin:28px 0;">
@@ -371,7 +352,7 @@ export async function markOrderPaidAndNotify({
     </div>
   </div>
 `,
-        text: `Tu compra de ${productList} fue aprobada. Total: ${formatMoney(result.order.total)}. Detalle: ${orderUrl}`,
+        text: `Tu compra de ${productList} fue aprobada. Total: ${formatMoney(result.order.total)}.${accessText ? `\n\nAcceso:\n${accessText}` : ""}\n\nDetalle: ${orderUrl}`,
       })
     );
   }
@@ -434,11 +415,11 @@ export async function markOrderPaidAndNotify({
     </p>
   </div>
 
-  <!-- CLIENTE Y ENTREGA -->
+  <!-- CLIENTE -->
   <div style="border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;">
     <div style="padding:14px 18px;background:#fafafa;border-bottom:1px solid #e4e4e7;">
       <p style="margin:0;font-size:13px;font-weight:700;color:#52525b;text-transform:uppercase;letter-spacing:.04em;">
-        Datos de entrega
+        Datos del comprador
       </p>
     </div>
     <div style="padding:18px;">
@@ -448,13 +429,10 @@ export async function markOrderPaidAndNotify({
       <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#18181b;">
         <strong>Teléfono:</strong> ${result.order.buyerPhone ?? "Sin teléfono"}
       </p>
-      <p style="margin:0;font-size:15px;line-height:1.6;color:#18181b;">
-        <strong>Dirección:</strong> ${result.order.shippingAddress}
-      </p>
       ${ result.order.shippingNotes ? `
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eeeeee;">
           <p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#52525b;">
-            Indicaciones adicionales
+            Indicaciones de acceso
           </p>
           <p style="margin:0;font-size:15px;line-height:1.6;color:#18181b;">
             ${result.order.shippingNotes}
@@ -476,7 +454,7 @@ export async function markOrderPaidAndNotify({
 </div>
 
             `,
-        text: `Se aprobo una venta de ${seller.products.join(", ")}. Total: ${formatMoney(seller.total)}. Neto vendedor: ${formatMoney(seller.net)}. Entrega: ${result.order.shippingAddress}. Cliente: ${result.order.buyerName ?? "Sin nombre"} - ${result.order.buyerPhone ?? "Sin telefono"}.`,
+        text: `Se aprobo una venta de ${seller.products.join(", ")}. Total: ${formatMoney(seller.total)}. Neto vendedor: ${formatMoney(seller.net)}. Cliente: ${result.order.buyerName ?? "Sin nombre"} - ${result.order.buyerPhone ?? "Sin telefono"}.`,
       })
     );
   }

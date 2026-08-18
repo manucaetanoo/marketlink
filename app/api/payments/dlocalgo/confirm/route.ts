@@ -29,8 +29,6 @@ type ShippingData = {
 };
 
 const ALLOWED_SHIPPING_COUNTRY = "UY";
-const SHIPPING_COUNTRY_ERROR =
-  "Por ahora las compras y entregas estan disponibles solo dentro de Uruguay";
 
 function cleanString(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
@@ -55,24 +53,12 @@ function parseShippingData(value: unknown) {
     shippingNotes: cleanString(shipping.shippingNotes, 1000) || null,
   };
 
-  if (
-    !data.buyerName ||
-    !data.buyerEmail ||
-    !data.buyerPhone ||
-    !data.shippingStreet ||
-    !data.shippingNumber ||
-    !data.shippingCity ||
-    !data.shippingState
-  ) {
-    throw new Error("Datos de entrega incompletos");
+  if (!data.buyerName || !data.buyerEmail || !data.buyerPhone) {
+    throw new Error("Datos de acceso incompletos");
   }
 
   if (!/^\S+@\S+\.\S+$/.test(data.buyerEmail)) {
-    throw new Error("Email de entrega invalido");
-  }
-
-  if (data.shippingCountry !== ALLOWED_SHIPPING_COUNTRY) {
-    throw new Error(SHIPPING_COUNTRY_ERROR);
+    throw new Error("Email invalido");
   }
 
   return data;
@@ -81,9 +67,8 @@ function parseShippingData(value: unknown) {
 function isCheckoutValidationError(error: unknown) {
   return (
     error instanceof Error &&
-    (error.message === "Datos de entrega incompletos" ||
-      error.message === "Email de entrega invalido" ||
-      error.message === SHIPPING_COUNTRY_ERROR)
+    (error.message === "Datos de acceso incompletos" ||
+      error.message === "Email invalido")
   );
 }
 

@@ -5,15 +5,13 @@ import {
   CheckCircle2,
   CreditCard,
   LockKeyhole,
-  MapPin,
   PackageCheck,
   ShieldCheck,
-  Truck,
+  UserRound,
 } from "lucide-react";
 import Script from "next/script";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { useCart } from "@/components/cart/CartProvider";
 
 type ShippingData = {
   buyerName: string;
@@ -102,10 +100,6 @@ const requiredShippingFields: Array<keyof ShippingData> = [
   "buyerName",
   "buyerEmail",
   "buyerPhone",
-  "shippingStreet",
-  "shippingNumber",
-  "shippingCity",
-  "shippingState",
 ];
 
 const ALLOWED_SHIPPING_COUNTRY = "UY";
@@ -144,7 +138,6 @@ export default function DlocalGoCheckoutClient({
   sdkUrl,
   draftItems,
 }: Props) {
-  const { clearCart } = useCart();
   const cardContainerRef = useRef<HTMLDivElement>(null);
   const cardFieldRef = useRef<DlocalField | null>(null);
   const initializedTokenRef = useRef<string | null>(null);
@@ -152,7 +145,7 @@ export default function DlocalGoCheckoutClient({
   const [loading, setLoading] = useState(false);
   const [cardReady, setCardReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+  const [accessConfirmed, setAccessConfirmed] = useState(false);
   const [checkoutToken, setCheckoutToken] = useState<string | null>(null);
   const [paymentOrderId, setPaymentOrderId] = useState(order.id);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(
@@ -164,7 +157,7 @@ export default function DlocalGoCheckoutClient({
   const [documentType, setDocumentType] = useState("CI");
   const [documentNumber, setDocumentNumber] = useState("");
 
-  const resetCardSession = (deliveryConfirmedValue = false) => {
+  const resetCardSession = (accessConfirmedValue = false) => {
     cardFieldRef.current?.unmount?.();
     cardFieldRef.current?.destroy?.();
     cardContainerRef.current?.replaceChildren();
@@ -174,7 +167,7 @@ export default function DlocalGoCheckoutClient({
     setCardReady(false);
     setInstallments([]);
     setInstallmentsId("");
-    setDeliveryConfirmed(deliveryConfirmedValue);
+    setAccessConfirmed(accessConfirmedValue);
   };
 
   useEffect(() => {
@@ -236,7 +229,7 @@ export default function DlocalGoCheckoutClient({
       (field) => !shipping[field].trim()
     );
 
-    if (missingField) return "Completa los datos de entrega antes de pagar.";
+    if (missingField) return "Completa tus datos para recibir el acceso antes de pagar.";
     if (!/^\S+@\S+\.\S+$/.test(shipping.buyerEmail.trim())) {
       return "Ingresa un email valido para recibir la confirmacion.";
     }
@@ -278,6 +271,12 @@ export default function DlocalGoCheckoutClient({
           shippingData: {
             ...shipping,
             shippingCountry: ALLOWED_SHIPPING_COUNTRY,
+            shippingStreet: "",
+            shippingNumber: "",
+            shippingApartment: "",
+            shippingCity: "",
+            shippingState: "",
+            shippingPostalCode: "",
           },
         }),
       });
@@ -296,7 +295,7 @@ export default function DlocalGoCheckoutClient({
 
       setPaymentStatus(String(data.payment?.status ?? "PENDING"));
       setCheckoutToken(String(token));
-      setDeliveryConfirmed(true);
+      setAccessConfirmed(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el pago");
     } finally {
@@ -347,6 +346,12 @@ export default function DlocalGoCheckoutClient({
           shippingData: {
             ...shipping,
             shippingCountry: ALLOWED_SHIPPING_COUNTRY,
+            shippingStreet: "",
+            shippingNumber: "",
+            shippingApartment: "",
+            shippingCity: "",
+            shippingState: "",
+            shippingPostalCode: "",
           },
         }),
       });
@@ -366,7 +371,6 @@ export default function DlocalGoCheckoutClient({
       }
 
       if (data.payment?.success === true) {
-        clearCart();
         window.location.href = `/orders/${confirmedOrderId}/success`;
         return;
       }
@@ -406,8 +410,8 @@ export default function DlocalGoCheckoutClient({
               </div>
 
               <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 shadow-sm backdrop-blur md:min-w-80">
-                <StepBadge active completed={deliveryConfirmed} icon={<Truck className="h-4 w-4" />} label="Entrega" />
-                <StepBadge active={deliveryConfirmed} completed={paymentStatus === "PAID"} icon={<CreditCard className="h-4 w-4" />} label="Pago" />
+                <StepBadge active completed={accessConfirmed} icon={<UserRound className="h-4 w-4" />} label="Datos" />
+                <StepBadge active={accessConfirmed} completed={paymentStatus === "PAID"} icon={<CreditCard className="h-4 w-4" />} label="Pago" />
                 <StepBadge active={paymentStatus === "PAID"} completed={paymentStatus === "PAID"} icon={<ShieldCheck className="h-4 w-4" />} label="Listo" />
               </div>
             </div>
@@ -418,76 +422,22 @@ export default function DlocalGoCheckoutClient({
           <section className="space-y-5">
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
               <SectionTitle
-                icon={<MapPin className="h-5 w-5" />}
-                title="Datos de entrega"
-                description="Usaremos esta informacion para coordinar el envio."
+                icon={<UserRound className="h-5 w-5" />}
+                title="Datos para recibir el acceso"
+                description="La empresa usara estos datos para enviarte el producto digital."
               />
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <TextField label="Nombre completo" value={shipping.buyerName} onChange={(value) => setShippingField("buyerName", value)} autoComplete="name" />
                 <TextField label="Email" value={shipping.buyerEmail} onChange={(value) => setShippingField("buyerEmail", value)} type="email" autoComplete="email" />
                 <TextField label="Telefono" value={shipping.buyerPhone} onChange={(value) => setShippingField("buyerPhone", value.replace(/\D/g, "").slice(0, 9).replace(/(\d{3})(\d{3})(\d{0,3})/, (_match, g1, g2, g3) => (g3 ? `${g1} ${g2} ${g3}` : `${g1} ${g2}`)))} type="tel" autoComplete="tel" />
-
-                <div className="block text-sm font-medium text-slate-700">
-                  Pais
-                  <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm">
-                    Uruguay
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Por ahora las compras y entregas estan disponibles solo dentro de Uruguay.
-                  </p>
-                </div>
-
-                <label className="block text-sm font-medium text-slate-700">
-                  Departamento
-                  <select
-                    required
-                    value={shipping.shippingState}
-                    onChange={(event) => setShippingField("shippingState", event.target.value)}
-                    className={inputClassName}
-                    autoComplete="address-level1"
-                  >
-                    <option value="">Selecciona un departamento</option>
-                    {[
-                      "Artigas",
-                      "Canelones",
-                      "Cerro Largo",
-                      "Colonia",
-                      "Durazno",
-                      "Flores",
-                      "Florida",
-                      "Lavalleja",
-                      "Maldonado",
-                      "Montevideo",
-                      "Paysandu",
-                      "Rio Negro",
-                      "Rivera",
-                      "Rocha",
-                      "Salto",
-                      "San Jose",
-                      "Soriano",
-                      "Tacuarembo",
-                      "Treinta y tres",
-                    ].map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <TextField label="Ciudad" value={shipping.shippingCity} onChange={(value) => setShippingField("shippingCity", value)} autoComplete="address-level2" />
-                <TextField label="Calle" value={shipping.shippingStreet} onChange={(value) => setShippingField("shippingStreet", value)} autoComplete="address-line1" />
-                <TextField label="Numero" value={shipping.shippingNumber} onChange={(value) => setShippingField("shippingNumber", value)} type="number" autoComplete="address-line2" />
-                <TextField label="Apto / referencia" value={shipping.shippingApartment} onChange={(value) => setShippingField("shippingApartment", value)} />
-                <TextField label="Codigo postal" value={shipping.shippingPostalCode} onChange={(value) => setShippingField("shippingPostalCode", value)} type="number" autoComplete="postal-code" />
-
                 <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
-                  Indicaciones
+                  Indicaciones para el vendedor
                   <textarea
                     value={shipping.shippingNotes}
                     onChange={(event) => setShippingField("shippingNotes", event.target.value)}
                     className={`${inputClassName} min-h-24 resize-none`}
+                    placeholder="Ej: email alternativo, usuario de la cuenta, datos para activar la licencia."
                   />
                 </label>
               </div>
@@ -498,16 +448,16 @@ export default function DlocalGoCheckoutClient({
                 disabled={loading}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <Truck className="h-4 w-4" />
-                {loading && !deliveryConfirmed ? "Preparando pago..." : "Continuar al pago"}
+                <UserRound className="h-4 w-4" />
+                {loading && !accessConfirmed ? "Preparando pago..." : "Continuar al pago"}
               </button>
             </div>
 
             <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
-              {!deliveryConfirmed ? (
+              {!accessConfirmed ? (
                 <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-                  <span>Completa y confirma los datos de entrega para habilitar el pago.</span>
+                  <span>Completa y confirma tus datos para habilitar el pago.</span>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -613,11 +563,6 @@ export default function DlocalGoCheckoutClient({
                       {item.selectedSize && (
                         <p className="mt-2 inline-flex rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700">
                           Talle {item.selectedSize}
-                        </p>
-                      )}
-                      {item.selectedColor && (
-                        <p className="mt-2 ml-2 inline-flex rounded-full bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">
-                          Color {item.selectedColor}
                         </p>
                       )}
                       <p className="mt-2 text-sm font-semibold text-slate-900">

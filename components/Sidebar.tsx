@@ -14,12 +14,9 @@ import {
   FiCreditCard,
   FiFileText,
   FiHelpCircle,
-  FiHome,
   FiLink,
-  FiLayers,
   FiPlus,
   FiShoppingBag,
-  FiTruck,
   FiUser,
   FiUsers,
 } from "react-icons/fi";
@@ -61,14 +58,14 @@ const menuAfiliado: Menu = {
     {
       title: "PRINCIPAL",
       items: [
-        { title: "Dashboard", href: "/dashboard/affiliate", icon: <FiHome /> },
+        { title: "Dashboard", href: "/dashboard/affiliate", icon: <FiBarChart2 /> },
         { title: "Mis links", href: "/dashboard/affiliate#links", icon: <FiLink /> },
       ],
     },
     {
       title: "RESULTADOS",
       items: [
-        { title: "Ordenes", href: "/dashboard/affiliate#orders", icon: <FiFileText /> },
+        { title: "Ventas", href: "/dashboard/affiliate#orders", icon: <FiFileText /> },
         { title: "Comisiones", href: "/dashboard/affiliate#commissions", icon: <FiBarChart2 /> },
         { title: "Pagos", href: "/dashboard/affiliate#payments", icon: <FiCreditCard /> },
       ],
@@ -93,12 +90,11 @@ const menuSeller: Menu = {
     {
       title: "PRINCIPAL",
       items: [
-        { title: "Dashboard", href: "/dashboard/seller", icon: <FiHome /> },
+        { title: "Dashboard", href: "/dashboard/seller", icon: <FiBarChart2 /> },
         { title: "Mis productos", href: "/seller/products", icon: <FiShoppingBag /> },
-        { title: "Campañas", href: "/seller/campaigns", icon: <FiLayers /> },
-        { title: "Ordenes", href: "/seller/orders", icon: <FiFileText /> },
+        { title: "Ventas digitales", href: "/seller/orders", icon: <FiFileText /> },
         {
-          title: "Ordenes liquidadas",
+          title: "Ventas liquidadas",
           href: "/seller/orders/settled",
           icon: <FiCheckCircle />,
         },
@@ -123,7 +119,7 @@ const menuSeller: Menu = {
 
 const menuAdmin: Menu = {
   cta: {
-    title: "Control entregas",
+    title: "Control ventas",
     href: "/admin/orders",
     icon: <FiFileText />,
   },
@@ -132,8 +128,8 @@ const menuAdmin: Menu = {
     {
       title: "PLATAFORMA",
       items: [
-        { title: "Entregas", href: "/admin/deliveries", icon: <FiTruck /> },
-        { title: "Ordenes", href: "/admin/orders", icon: <FiFileText /> },
+        { title: "Liquidaciones digitales", href: "/admin/deliveries", icon: <FiCreditCard /> },
+        { title: "Ventas", href: "/admin/orders", icon: <FiFileText /> },
         { title: "Liquidaciones", href: "/admin/payouts", icon: <FiCreditCard /> },
         { title: "Productos", href: "/seller/products", icon: <FiShoppingBag /> },
       ],
@@ -295,7 +291,7 @@ export default function Sidebar() {
                             active ? "ring-slate-900" : "ring-slate-50",
                             collapsed ? "right-4 top-2.5" : "right-3 top-1/2 -translate-y-1/2"
                           )}
-                          aria-label={`${pendingSellerOrders} ordenes pendientes de envio`}
+                          aria-label={`${pendingSellerOrders} ventas digitales pendientes`}
                         />
                       )}
                   </Link>

@@ -5,12 +5,10 @@ import {
   Circle,
   Clock3,
   CreditCard,
-  ExternalLink,
   Package,
-  Truck,
+  Send,
   XCircle,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { prisma } from "@/lib/prisma";
 
 type FulfillmentStatus =
@@ -25,11 +23,11 @@ type OrderStatus = "PENDING" | "PAID" | "CANCELED";
 
 const fulfillmentLabels: Record<FulfillmentStatus, string> = {
   CANCELED: "Cancelado",
-  DELIVERY_REQUESTED: "Entregado en revision",
-  DELIVERED: "Entregado",
+  DELIVERY_REQUESTED: "Acceso en revision",
+  DELIVERED: "Acceso habilitado",
   PENDING: "Pendiente",
-  PREPARING: "Preparando",
-  SHIPPED: "Enviado",
+  PREPARING: "Preparando acceso",
+  SHIPPED: "Acceso enviado",
 };
 
 const orderLabels: Record<OrderStatus, string> = {
@@ -41,8 +39,8 @@ const orderLabels: Record<OrderStatus, string> = {
 const timeline = [
   {
     key: "PENDING",
-    title: "Pedido recibido",
-    description: "La orden fue creada y esta esperando confirmacion.",
+    title: "Compra creada",
+    description: "La compra digital fue creada y esta esperando confirmacion.",
     icon: Clock3,
   },
   {
@@ -53,15 +51,15 @@ const timeline = [
   },
   {
     key: "PREPARING",
-    title: "Preparando",
-    description: "El vendedor esta preparando tu compra.",
+    title: "Preparando acceso",
+    description: "El vendedor esta preparando el acceso digital.",
     icon: Package,
   },
   {
     key: "SHIPPED",
-    title: "Enviado",
-    description: "Tu pedido ya fue despachado.",
-    icon: Truck,
+    title: "Acceso enviado",
+    description: "La informacion de acceso ya fue enviada o habilitada.",
+    icon: Send,
   },
 ] as const;
 
@@ -101,29 +99,6 @@ function isStepDone(step: (typeof timeline)[number]["key"], progress: string) {
   return order.indexOf(progress) >= order.indexOf(step);
 }
 
-function address(order: {
-  shippingStreet: string | null;
-  shippingNumber: string | null;
-  shippingApartment: string | null;
-  shippingCity: string | null;
-  shippingState: string | null;
-  shippingPostalCode: string | null;
-  shippingCountry: string | null;
-}) {
-  return [
-    order.shippingStreet && order.shippingNumber
-      ? `${order.shippingStreet} ${order.shippingNumber}`
-      : order.shippingStreet,
-    order.shippingApartment,
-    order.shippingCity,
-    order.shippingState,
-    order.shippingPostalCode,
-    order.shippingCountry,
-  ]
-    .filter(Boolean)
-    .join(", ");
-}
-
 export default async function PedidoDetallePage({
   params,
 }: {
@@ -139,13 +114,9 @@ export default async function PedidoDetallePage({
       status: true,
       createdAt: true,
       buyerName: true,
-      shippingStreet: true,
-      shippingNumber: true,
-      shippingApartment: true,
-      shippingCity: true,
-      shippingState: true,
-      shippingPostalCode: true,
-      shippingCountry: true,
+      buyerEmail: true,
+      buyerPhone: true,
+      shippingNotes: true,
       items: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -157,6 +128,7 @@ export default async function PedidoDetallePage({
           product: {
             select: {
               name: true,
+              digitalAccessInstructions: true,
             },
           },
         },
@@ -166,9 +138,6 @@ export default async function PedidoDetallePage({
         select: {
           id: true,
           fulfillmentStatus: true,
-          shippingCarrier: true,
-          trackingCode: true,
-          trackingUrl: true,
           shippedAt: true,
           deliveredAt: true,
           sellerNotes: true,
@@ -193,13 +162,12 @@ export default async function PedidoDetallePage({
   const progress = getOverallProgress(order.status as OrderStatus, fulfillmentStatuses);
   const currentLabel =
     progress === "CANCELED"
-      ? "Pedido cancelado"
+      ? "Compra cancelada"
       : progress === "PAID"
         ? "Pago confirmado"
         : progress === "PENDING"
           ? "Pago pendiente"
           : fulfillmentLabels[progress as FulfillmentStatus];
-  const shippingAddress = address(order);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -208,10 +176,10 @@ export default async function PedidoDetallePage({
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-              Seguimiento
+              Acceso digital
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Pedido {order.id.slice(-8)}
+              Compra digital {order.id.slice(-8)}
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Compra realizada el {formatDate(order.createdAt)}.
@@ -234,11 +202,11 @@ export default async function PedidoDetallePage({
           <section className="mt-8 rounded-lg border border-rose-200 bg-rose-50 p-5 text-rose-800">
             <div className="flex items-center gap-3">
               <XCircle className="h-5 w-5" />
-              <h2 className="text-base font-semibold">Este pedido fue cancelado</h2>
+              <h2 className="text-base font-semibold">Esta compra fue cancelada</h2>
             </div>
             <p className="mt-2 text-sm leading-6">
-              Si tienes dudas sobre el pago o la entrega, contacta al vendedor o
-              al soporte de Afilink con el numero completo del pedido.
+              Si tienes dudas sobre el pago o el acceso, contacta al vendedor o
+              al soporte de Afilink con el numero completo de la compra.
             </p>
           </section>
         ) : (
@@ -302,8 +270,13 @@ export default async function PedidoDetallePage({
                     <p className="mt-1 text-xs text-slate-500">
                       x{item.quantity}
                       {item.selectedSize ? ` - Talle ${item.selectedSize}` : ""}
-                      {item.selectedColor ? ` - Color ${item.selectedColor}` : ""}
                     </p>
+                    {order.status === "PAID" &&
+                      item.product.digitalAccessInstructions && (
+                        <div className="mt-3 rounded-lg border border-orange-100 bg-orange-50 p-3 text-sm leading-6 text-orange-950 whitespace-pre-line">
+                          {item.product.digitalAccessInstructions}
+                        </div>
+                      )}
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-slate-900">
                     {money(item.total)}
@@ -314,28 +287,34 @@ export default async function PedidoDetallePage({
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950">Entrega</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Acceso digital</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="font-medium text-slate-500">Comprador</dt>
                 <dd className="mt-1 text-slate-900">{order.buyerName ?? "Sin nombre"}</dd>
               </div>
               <div>
-                <dt className="font-medium text-slate-500">Direccion</dt>
+                <dt className="font-medium text-slate-500">Contacto</dt>
                 <dd className="mt-1 leading-6 text-slate-900">
-                  {shippingAddress || "Sin direccion cargada"}
+                  {order.buyerEmail ?? order.buyerPhone ?? "Sin contacto"}
                 </dd>
               </div>
+              {order.shippingNotes && (
+                <div>
+                  <dt className="font-medium text-slate-500">Indicaciones</dt>
+                  <dd className="mt-1 leading-6 text-slate-900">{order.shippingNotes}</dd>
+                </div>
+              )}
             </dl>
           </div>
         </section>
 
         <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-950">Envios</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Estado por vendedor</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {order.settlements.length === 0 && (
               <p className="text-sm leading-6 text-slate-600">
-                El envio se va a activar cuando el pago quede confirmado.
+                El acceso se va a activar cuando el pago quede confirmado.
               </p>
             )}
 
@@ -357,27 +336,15 @@ export default async function PedidoDetallePage({
                 </div>
 
                 <div className="mt-4 space-y-2 text-sm text-slate-600">
-                  {settlement.shippingCarrier && (
-                    <p>
-                      <span className="font-medium text-slate-800">Empresa:</span>{" "}
-                      {settlement.shippingCarrier}
-                    </p>
-                  )}
-                  {settlement.trackingCode && (
-                    <p>
-                      <span className="font-medium text-slate-800">Tracking:</span>{" "}
-                      {settlement.trackingCode}
-                    </p>
-                  )}
                   {settlement.shippedAt && (
                     <p>
-                      <span className="font-medium text-slate-800">Enviado:</span>{" "}
+                      <span className="font-medium text-slate-800">Acceso enviado:</span>{" "}
                       {formatDate(settlement.shippedAt)}
                     </p>
                   )}
                   {settlement.deliveredAt && (
                     <p>
-                      <span className="font-medium text-slate-800">Entregado:</span>{" "}
+                      <span className="font-medium text-slate-800">Acceso habilitado:</span>{" "}
                       {formatDate(settlement.deliveredAt)}
                     </p>
                   )}
@@ -387,18 +354,6 @@ export default async function PedidoDetallePage({
                     </p>
                   )}
                 </div>
-
-                {settlement.trackingUrl && (
-                  <a
-                    href={settlement.trackingUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-orange-700 hover:text-orange-800"
-                  >
-                    Abrir tracking
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
               </div>
             ))}
           </div>
@@ -409,7 +364,7 @@ export default async function PedidoDetallePage({
             href="/pedido"
             className="inline-flex rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
           >
-            Consultar otro pedido
+            Consultar otra compra
           </Link>
           <Link
             href="/products"

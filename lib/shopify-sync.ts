@@ -70,14 +70,12 @@ function getShopifyVariantId({
   fallbackVariantId,
   variants,
   selectedSize,
-  selectedColor,
 }: {
   fallbackVariantId: string | null;
   variants: unknown;
   selectedSize?: string | null;
-  selectedColor?: string | null;
 }) {
-  const selectedOptions = [selectedSize, selectedColor]
+  const selectedOptions = [selectedSize]
     .map((value) => value?.trim().toUpperCase())
     .filter((value): value is string => Boolean(value));
 
@@ -351,7 +349,6 @@ export async function syncShopifyOrder(orderId: string) {
           fallbackVariantId: item.product.shopifyVariantId,
           variants: item.product.shopifyVariants,
           selectedSize: item.selectedSize,
-          selectedColor: item.selectedColor,
         });
 
         if (!variantId) {

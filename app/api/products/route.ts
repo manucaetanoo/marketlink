@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { parseProductColors } from "@/lib/product-color";
 import { getRenderableProductImageUrls } from "@/lib/product-images";
 
 const MAX_PRODUCTS_TAKE = 80;
@@ -34,7 +33,6 @@ export async function GET(req: Request) {
         price: true,
         stock: true,
         commissionValue: true,
-        colors: true,
         imageUrls: true,
       },
     }),
@@ -52,7 +50,6 @@ export async function GET(req: Request) {
       price: product.price,
       stock: product.stock,
       commissionValue: product.commissionValue,
-      colors: parseProductColors(product.colors),
       imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
     })),
   });

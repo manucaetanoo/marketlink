@@ -5,12 +5,13 @@ import SellerProductsPage from "./SellerProductsPage";
 
 export default async function Page() {
   const session = await getServerSession(authOptions);
+  const role = String(session?.user?.role ?? "").toUpperCase();
 
-  if (!session?.user?.id || session.user.role !== "SELLER") {
+  if (!session?.user?.id || (role !== "SELLER" && role !== "ADMIN")) {
     redirect("/login");
   }
 
-  if (!session.user.storeSlug) {
+  if (role === "SELLER" && !session.user.storeSlug) {
     redirect("/onboarding/seller");
   }
 

@@ -27,9 +27,9 @@ const steps = [
   },
   {
     label: "Paso 2",
-    title: "Publica o elige una campaña",
+    title: "Publica o elige un producto",
     description:
-      "Si sos vendedor, creá una campaña para tus productos. Si sos afiliado, elegí una campaña para promocionar.",
+      "Si sos vendedor, publicá productos digitales. Si sos afiliado, elegí un producto para promocionar.",
     icon: MegaphoneIcon,
   },
   {
@@ -45,19 +45,19 @@ const features = [
   {
     name: "Vendé con afiliados",
     description:
-      "Publicá tus productos, creá campañas y permití que otras personas los promocionen por comisión.",
+      "Publicá productos digitales y permití que otras personas los promocionen por comisión.",
     icon: ShoppingBagIcon,
   },
   {
     name: "Links personalizados",
     description:
-      "Cada afiliado obtiene su propio link para compartir campañas y generar ventas rastreables.",
+      "Cada afiliado obtiene su propio link para compartir productos y generar ventas rastreables.",
     icon: CursorArrowRaysIcon,
   },
   {
     name: "Dashboard claro",
     description:
-      "Visualizá ventas, comisiones, productos y campañas desde un panel simple.",
+      "Visualizá ventas, comisiones, productos y afiliados desde un panel simple.",
     icon: ChartBarIcon,
   },
   {
@@ -72,10 +72,10 @@ const roles = [
   {
     name: "Para vendedores",
     description:
-      "Ideal para marcas, emprendedores o tiendas que quieren vender más sin depender solo de publicidad paga.",
+      "Ideal para creadores, emprendedores y vendedores que ofrecen cursos, ebooks, membresías, software, plantillas o servicios digitales.",
     features: [
-      "Publicá productos",
-      "Creá campañas",
+      "Publicá productos digitales",
+      "Generá links de afiliado",
       "Trabajá con afiliados",
       "Pagá comisión solo cuando vendés",
     ],
@@ -84,9 +84,9 @@ const roles = [
   {
     name: "Para afiliados",
     description:
-      "Pensado para personas que quieren generar ingresos recomendando productos de otras tiendas.",
+      "Pensado para personas que quieren generar ingresos recomendando productos digitales.",
     features: [
-      "Elegí campañas",
+      "Elegí productos",
       "Compartí tu link",
       "Generá comisiones",
       "Seguí tus resultados",
@@ -99,7 +99,7 @@ const faqs = [
   {
     question: "¿Qué es Afilink?",
     answer:
-      "Afilink es una plataforma que conecta vendedores con afiliados. Los vendedores publican productos y campañas, y los afiliados los promocionan a cambio de una comisión.",
+      "Afilink es una plataforma que conecta vendedores de productos digitales con afiliados. Los vendedores publican productos y los afiliados los promocionan a cambio de una comisión.",
   },
   {
     question: "¿Cómo gana dinero un afiliado?",
@@ -122,22 +122,31 @@ const stats: StatItem[] = [
 ];
 
 const integrations = [
-  // {
-  //   name: "Shopify",
-  //   logo: "/img/Shopify-Logo-PNG.png",
-  //   description: "Importa productos, precios, imagenes y stock desde tu tienda.",
-  // },
-  // {
-    // name: "Fenicio",
-  //   logo: "/img/fenicio-logo.png",
-   //  description: "Conecta catalogos Fenicio mediante el feed del comercio.",
-  // },
-    {
-    name: "WooCommerce",
-    logo: "/img/WooCommerce-Logo-New.png",
-    description: "Conectá tu tienda WooCommerce con Afilink y mantené sincronizados tus productos, stock y órdenes en un solo lugar.",
+  {
+    name: "Productos digitales",
+    logo: "/img/logosbg.png",
+    description: "Publicá cursos, ebooks, licencias, membresías, plantillas o recursos descargables sin stock ni logística.",
   },
 ];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+const stagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.09,
+    },
+  },
+};
 
 export default function Home() {
   return (
@@ -147,12 +156,30 @@ export default function Home() {
       <main className="isolate">
         <section id="inicio" className="relative isolate overflow-hidden px-6 pt-14 lg:px-8">
           <div className="absolute inset-x-0 -top-40 -z-10 blur-3xl sm:-top-80">
-            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#E89C51] to-orange-200 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72rem]" />
+            <motion.div
+              animate={{
+                x: [0, 18, -10, 0],
+                y: [0, 10, -6, 0],
+                rotate: [30, 33, 28, 30],
+                scale: [1, 1.04, 1],
+              }}
+              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+              className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#E89C51] to-orange-200 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72rem]"
+            />
           </div>
 
-          <div className="mx-auto max-w-3xl py-32 text-center sm:py-48 lg:py-56">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={stagger}
+            className="mx-auto max-w-3xl py-32 text-center sm:py-48 lg:py-56"
+          >
 
-            <h1 className="text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-7xl">
+            <motion.h1
+              variants={fadeUp}
+              transition={{ duration: 0.65, ease: "easeOut" }}
+              className="text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-7xl"
+            >
               Haz crecer tus{" "}
               <span className="text-[#E89C51]">
                 <FlipWords
@@ -160,13 +187,21 @@ export default function Home() {
                   duration={2000}
                 />
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">
-              En Afilink conectamos empresas que quieren aumentar sus ventas con promotores que buscan generar ingresos por internet.
-            </p>
+            <motion.p
+              variants={fadeUp}
+              transition={{ duration: 0.65, ease: "easeOut" }}
+              className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8"
+            >
+              En Afilink conectamos vendedores de productos digitales con promotores que buscan generar ingresos por internet.
+            </motion.p>
 
-            <div className="mt-10 flex items-center justify-center gap-x-6">
+            <motion.div
+              variants={fadeUp}
+              transition={{ duration: 0.65, ease: "easeOut" }}
+              className="mt-10 flex items-center justify-center gap-x-6"
+            >
               <Link
                 href="/register"
                 className="rounded-md bg-[#F78211] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d98b3f]"
@@ -177,8 +212,8 @@ export default function Home() {
               <a href="#como-funciona" className="text-sm font-semibold text-gray-900">
                 Ver más <span aria-hidden="true">→</span>
               </a>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
 {/* <section className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -208,7 +243,14 @@ export default function Home() {
 
 
         <section id="como-funciona" className="relative px-6 py-24 sm:py-32 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            variants={fadeUp}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            viewport={{ once: true, amount: 0.35 }}
+            className="mx-auto max-w-2xl text-center"
+          >
             <h2 className="text-base font-semibold text-[#F78211]">¿Cómo empezar?</h2>
             <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
               Empezar en Afilink es simple
@@ -216,21 +258,29 @@ export default function Home() {
             <p className="mt-6 text-lg text-gray-500">
               En pocos pasos podés vender productos o generar comisiones como afiliado.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mx-auto mt-20 grid max-w-6xl gap-8 lg:grid-cols-3">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            variants={stagger}
+            viewport={{ once: true, amount: 0.2 }}
+            className="mx-auto mt-20 grid max-w-6xl gap-8 lg:grid-cols-3"
+          >
             {steps.map((step, index) => (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: index * 0.08 }}
-                viewport={{ once: true }}
+                variants={fadeUp}
+                transition={{ duration: 0.45, delay: index * 0.03, ease: "easeOut" }}
+                whileHover={{ y: -6 }}
                 className="rounded-3xl border border-orange-100 bg-white p-8 shadow-sm"
               >
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-orange-50 text-[#F78211]">
+                <motion.div
+                  whileHover={{ rotate: -4, scale: 1.06 }}
+                  className="flex size-14 items-center justify-center rounded-2xl bg-orange-50 text-[#F78211]"
+                >
                   <step.icon className="size-7" />
-                </div>
+                </motion.div>
 
                 <span className="mt-8 block text-sm font-semibold text-[#F78211]">
                   {step.label}
@@ -240,85 +290,82 @@ export default function Home() {
                 <p className="mt-3 text-gray-500">{step.description}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
         <section id="beneficios" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            variants={fadeUp}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            viewport={{ once: true, amount: 0.35 }}
+            className="mx-auto max-w-2xl lg:text-center"
+          >
             <h2 className="text-base font-semibold text-[#F78211]">Beneficios</h2>
             <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
               Todo lo necesario para vender y promocionar
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mx-auto mt-16 grid max-w-5xl gap-10 lg:grid-cols-2">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            variants={stagger}
+            viewport={{ once: true, amount: 0.2 }}
+            className="mx-auto mt-16 grid max-w-5xl gap-10 lg:grid-cols-2"
+          >
             {features.map((feature) => (
-              <div key={feature.name} className="relative pl-16">
-                <div className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-lg bg-[#F78211]">
+              <motion.div
+                key={feature.name}
+                variants={fadeUp}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+                whileHover={{ x: 4 }}
+                className="relative pl-16"
+              >
+                <motion.div
+                  whileHover={{ rotate: 6, scale: 1.08 }}
+                  className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-lg bg-[#F78211]"
+                >
                   <feature.icon className="size-6 text-white" />
-                </div>
+                </motion.div>
                 <h3 className="text-base font-semibold text-gray-900">{feature.name}</h3>
                 <p className="mt-2 text-base leading-7 text-gray-500">{feature.description}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
-         <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-          <div className="grid items-center gap-10 rounded-3xl bg-white p-6 shadow-sm sm:p-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <p className="text-base font-semibold text-[#F78211]">
-                Integraciones
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
-                Conectá tu tienda sin cargar todo a mano
-              </h2>
-              <p className="mt-4 text-base leading-7 text-gray-500">
-                Afilink te permite importar productos desde WooCommerce para publicar tu catálogo más rápido y empezar a trabajar con afiliados en menos pasos.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {integrations.map((integration) => (
-                <div
-                  key={integration.name}
-                  className="rounded-2xl border border-orange-100 bg-[#fffaf6] p-5"
-                >
-                  <div className="flex min-h-16 items-center">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {integration.name}
-                    </h3>
-                    <div className="flex h-16 items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={integration.logo}
-                        alt={integration.name}
-                        className="max-h-14 max-w-[140px] object-contain"
-                      />
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-gray-500">
-                    {integration.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
         
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              variants={fadeUp}
+              transition={{ duration: 0.55, ease: "easeOut" }}
+              viewport={{ once: true, amount: 0.35 }}
+              className="mx-auto max-w-3xl text-center"
+            >
               <h2 className="text-base font-semibold text-[#F78211]">Elegí tu rol</h2>
               <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
                 Una plataforma para vendedores y afiliados
               </p>
-            </div>
+            </motion.div>
 
-            <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-2">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              variants={stagger}
+              viewport={{ once: true, amount: 0.2 }}
+              className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-2"
+            >
               {roles.map((role) => (
-                <div
+                <motion.div
                   key={role.name}
+                  variants={fadeUp}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  whileHover={{ y: -6 }}
                   className={`rounded-3xl bg-white p-8 shadow-sm ${
                     role.highlighted
                       ? "ring-2 ring-[#F78211]"
@@ -351,38 +398,64 @@ export default function Home() {
                   >
                     Empezar ahora
                   </Link>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         <section id="faq" className="mx-auto max-w-7xl px-6 pb-24 lg:px-8">
-          <h2 className="text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+          <motion.h2
+            initial="hidden"
+            whileInView="visible"
+            variants={fadeUp}
+            transition={{ duration: 0.55, ease: "easeOut" }}
+            viewport={{ once: true, amount: 0.35 }}
+            className="text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl"
+          >
             Preguntas frecuentes
-          </h2>
+          </motion.h2>
 
-          <dl className="mt-16 divide-y divide-gray-900/10">
+          <motion.dl
+            initial="hidden"
+            whileInView="visible"
+            variants={stagger}
+            viewport={{ once: true, amount: 0.15 }}
+            className="mt-16 divide-y divide-gray-900/10"
+          >
             {faqs.map((faq) => (
-              <div key={faq.question} className="py-8 lg:grid lg:grid-cols-12 lg:gap-8">
+              <motion.div
+                key={faq.question}
+                variants={fadeUp}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+                className="py-8 lg:grid lg:grid-cols-12 lg:gap-8"
+              >
                 <dt className="text-base font-semibold text-gray-900 lg:col-span-5">
                   {faq.question}
                 </dt>
                 <dd className="mt-4 lg:col-span-7 lg:mt-0">
                   <p className="text-base leading-7 text-gray-500">{faq.answer}</p>
                 </dd>
-              </div>
+              </motion.div>
             ))}
-          </dl>
+          </motion.dl>
         </section>
 
         <section className="px-6 pb-24 lg:px-8">
-          <div className="mx-auto max-w-3xl rounded-3xl bg-gray-950 px-6 py-16 text-center shadow-xl sm:px-12">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            variants={fadeUp}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            viewport={{ once: true, amount: 0.35 }}
+            whileHover={{ y: -4 }}
+            className="mx-auto max-w-3xl rounded-3xl bg-gray-950 px-6 py-16 text-center shadow-xl sm:px-12"
+          >
             <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
               Empezá a vender más o generar comisiones hoy
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-gray-300">
-              Afilink te da una forma simple de conectar productos, campañas y personas que pueden ayudarte a crecer.
+              Afilink te da una forma simple de conectar productos digitales con personas que pueden ayudarte a crecer.
             </p>
 
             <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -397,7 +470,7 @@ export default function Home() {
                 Iniciar sesión <span aria-hidden="true">→</span>
               </Link>
             </div>
-          </div>
+          </motion.div>
         </section>
       </main>
 

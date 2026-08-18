@@ -22,12 +22,12 @@ type CheckoutShippingData = {
   buyerName: string;
   buyerEmail: string;
   buyerPhone: string;
-  shippingStreet: string;
-  shippingNumber: string;
-  shippingApartment: string | null;
-  shippingCity: string;
-  shippingState: string;
-  shippingPostalCode: string | null;
+  shippingStreet?: string | null;
+  shippingNumber?: string | null;
+  shippingApartment?: string | null;
+  shippingCity?: string | null;
+  shippingState?: string | null;
+  shippingPostalCode?: string | null;
   shippingCountry: string;
   shippingNotes: string | null;
 };
@@ -158,12 +158,7 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
       throw new Error("Producto inactivo");
     }
 
-    if (product.stock < quantity) {
-      throw new Error(`Stock insuficiente para ${product.name}`);
-    }
-
     const selectedSize = item.selectedSize?.trim() || null;
-    const selectedColor = item.selectedColor?.trim() || null;
 
     if (product.sizes.length > 0) {
       if (!selectedSize) {
@@ -172,28 +167,6 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
 
       if (!product.sizes.includes(selectedSize)) {
         throw new Error(`Talle invalido para ${product.name}`);
-      }
-    }
-
-    const productColors = Array.isArray(product.colors)
-      ? product.colors.filter(
-          (color): color is { name: string; hex: string } =>
-            Boolean(
-              color &&
-                typeof color === "object" &&
-                "name" in color &&
-                typeof color.name === "string"
-            )
-        )
-      : [];
-
-    if (productColors.length > 0) {
-      if (!selectedColor) {
-        throw new Error(`Selecciona un color para ${product.name}`);
-      }
-
-      if (!productColors.some((color) => color.name === selectedColor)) {
-        throw new Error(`Color invalido para ${product.name}`);
       }
     }
 
@@ -217,7 +190,7 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
       product,
       quantity,
       selectedSize: product.sizes.length > 0 ? selectedSize : null,
-      selectedColor: productColors.length > 0 ? selectedColor : null,
+      selectedColor: null,
       ...attribution,
       total,
       affiliateAmount: split.affiliateAmount,
@@ -228,25 +201,6 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
 
   if (resolved.length === 0) {
     throw new Error("El checkout no tiene productos validos");
-  }
-
-  const quantitiesByProduct = new Map<string, { name: string; stock: number; quantity: number }>();
-
-  for (const item of resolved) {
-    const current = quantitiesByProduct.get(item.product.id) ?? {
-      name: item.product.name,
-      stock: item.product.stock,
-      quantity: 0,
-    };
-
-    current.quantity += item.quantity;
-    quantitiesByProduct.set(item.product.id, current);
-  }
-
-  for (const item of quantitiesByProduct.values()) {
-    if (item.stock < item.quantity) {
-      throw new Error(`Stock insuficiente para ${item.name}`);
-    }
   }
 
   return resolved;

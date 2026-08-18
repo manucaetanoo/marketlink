@@ -8,7 +8,6 @@ import {
   FiCheckCircle,
   FiClock,
   FiDollarSign,
-  FiLayers,
   FiPackage,
   FiPlus,
   FiShoppingCart,
@@ -94,7 +93,7 @@ function statusLabel(status: string) {
   const labels: Record<string, string> = {
     AVAILABLE: "Disponible",
     CANCELED: "Cancelada",
-    DELIVERY_REQUESTED: "Entregado por revisar",
+    DELIVERY_REQUESTED: "Acceso por revisar",
     PAID: "Pagada",
     PENDING: "Pendiente",
   };
@@ -105,11 +104,11 @@ function statusLabel(status: string) {
 function fulfillmentLabel(status: string) {
   const labels: Record<string, string> = {
     CANCELED: "Cancelado",
-    DELIVERY_REQUESTED: "Entregado por revisar",
-    DELIVERED: "Entregado",
+    DELIVERY_REQUESTED: "Acceso por revisar",
+    DELIVERED: "Acceso habilitado",
     PENDING: "Pendiente",
-    PREPARING: "Preparando",
-    SHIPPED: "Enviado",
+    PREPARING: "Preparando acceso",
+    SHIPPED: "Acceso enviado",
   };
 
   return labels[status] ?? status;
@@ -208,7 +207,6 @@ function PaymentAvailabilityMeta({
 }
 
 const DASHBOARD_PRODUCTS_LIMIT = 100;
-const DASHBOARD_CAMPAIGNS_LIMIT = 50;
 const DASHBOARD_RECENT_ITEMS_LIMIT = 80;
 const DASHBOARD_RECENT_SETTLEMENTS_LIMIT = 80;
 
@@ -232,11 +230,9 @@ export default async function SellerDashboardPage() {
 
   const [
     products,
-    campaigns,
     orderItems,
     settlements,
     productLinks,
-    campaignLinks,
     pendingPayoutRequest,
   ] =
     await Promise.all([
@@ -254,20 +250,6 @@ export default async function SellerDashboardPage() {
         },
         orderBy: { createdAt: "desc" },
         take: DASHBOARD_PRODUCTS_LIMIT,
-      }),
-      prisma.campaign.findMany({
-        where: { sellerId },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          isActive: true,
-          startsAt: true,
-          endsAt: true,
-          _count: { select: { products: true, affiliateLinks: true, orders: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: DASHBOARD_CAMPAIGNS_LIMIT,
       }),
       prisma.orderItem.findMany({
         where: { sellerId },
@@ -330,14 +312,6 @@ export default async function SellerDashboardPage() {
           _count: { select: { clicks: true } },
         },
       }),
-      prisma.affiliateCampaignLink.findMany({
-        where: { campaign: { sellerId } },
-        select: {
-          id: true,
-          affiliateId: true,
-          _count: { select: { clicks: true } },
-        },
-      }),
       prisma.payoutRequest.findFirst({
         where: {
           requesterId: sellerId,
@@ -379,11 +353,7 @@ export default async function SellerDashboardPage() {
     0
   );
   const availableSettlement = settlements
-    .filter(
-      (settlement) =>
-        settlement.status === "AVAILABLE" &&
-        settlement.fulfillmentStatus === "DELIVERED"
-    )
+    .filter((settlement) => settlement.status === "AVAILABLE")
     .reduce((total, settlement) => total + settlement.netAmount, 0);
   const retainedSettlements = settlements.filter(
     (settlement) => settlement.status === "PENDING"
@@ -392,26 +362,13 @@ export default async function SellerDashboardPage() {
     (total, settlement) => total + settlement.netAmount,
     0
   );
-  const deliveryPendingSettlements = settlements.filter(
-    (settlement) =>
-      settlement.status === "PENDING" &&
-      ["PENDING", "PREPARING", "SHIPPED"].includes(settlement.fulfillmentStatus)
-  );
-  const deliveryPendingAmount = deliveryPendingSettlements.reduce(
-    (total, settlement) => total + settlement.netAmount,
-    0
-  );
   const paidSettlement = settlements
     .filter((settlement) => settlement.status === "PAID")
     .reduce((total, settlement) => total + settlement.netAmount, 0);
-  const totalClicks =
-    productLinks.reduce((total, link) => total + link._count.clicks, 0) +
-    campaignLinks.reduce((total, link) => total + link._count.clicks, 0);
+  const totalClicks = productLinks.reduce((total, link) => total + link._count.clicks, 0);
   const activeProducts = products.filter((product) => product.isActive).length;
-  const activeCampaigns = campaigns.filter((campaign) => campaign.isActive).length;
   const activeAffiliates = new Set([
     ...productLinks.map((link) => link.affiliateId),
-    ...campaignLinks.map((link) => link.affiliateId),
     ...orderItems
       .map((item) => item.affiliate?.id ?? null)
       .filter((id): id is string => Boolean(id)),
@@ -473,7 +430,7 @@ export default async function SellerDashboardPage() {
                   Control comercial de tu tienda
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Ventas, productos, campañas, afiliados y liquidaciones en una
+                  Ventas, productos, afiliados y liquidaciones en una
                   vista lista para operar.
                 </p>
               </div>
@@ -490,32 +447,8 @@ export default async function SellerDashboardPage() {
                   <FiPlus />
                   Crear producto
                 </Link>
-                <Link
-                  href="/seller/campaigns/new"
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                >
-                  <FiLayers />
-                  Nueva campaña
-                </Link>
               </div>
             </div>
-
-            {deliveryPendingAmount > 0 && (
-              <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
-                <p className="text-sm font-medium text-amber-950">
-                  Liquidacion pendiente por entrega
-                </p>
-                <p className="mt-1 text-sm leading-6 text-amber-900">
-                  Tenes {money(deliveryPendingAmount)} retenidos en{" "}
-                  {number(deliveryPendingSettlements.length)} ordenes pendientes de entrega. La
-                  liquidacion del pago va a estar disponible 7 dias despues de la
-                  acreditacion y cuando se confirme la entrega.
-                </p>
-                <p className="mt-2 text-sm font-bold text-red-800">
-                  Ve a ordenes, revisa tus ordenes pendientes y coordina la entrega con el comprador para liberar tu pago.
-                </p>
-              </div>
-            )}
 
             <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <StatCard
@@ -534,7 +467,7 @@ export default async function SellerDashboardPage() {
               />
               <StatCard
                 icon={<FiShoppingCart />}
-                label="Ordenes pagas"
+                label="Ventas digitales"
                 value={number(paidSellerOrders.length)}
                 detail={`${delta(currentSellerOrders.length, previousSellerOrders.length)} vs. periodo anterior`}
                 tone="slate"
@@ -543,7 +476,7 @@ export default async function SellerDashboardPage() {
                 icon={<FiClock />}
                 label="Retenido"
                 value={money(retainedAmount)}
-                detail={`${number(retainedSettlements.length)} ordenes retenidas`}
+                detail={`${number(retainedSettlements.length)} ventas retenidas`}
                 tone="slate"
               />
               <StatCard
@@ -572,17 +505,6 @@ export default async function SellerDashboardPage() {
 
               <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-500">Campañas activas</p>
-                  <FiLayers className="text-sky-500" />
-                </div>
-                <p className="mt-3 text-2xl font-semibold">{number(activeCampaigns)}</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {number(campaigns.length)} campañas creadas
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-slate-500">Afiliados activos</p>
                   <FiUsers className="text-emerald-500" />
                 </div>
@@ -590,7 +512,7 @@ export default async function SellerDashboardPage() {
                   {number(activeAffiliates)}
                 </p>
                 <p className="mt-2 text-sm text-slate-500">
-                  Con links, campañas o ventas
+                  Con links o ventas
                 </p>
               </div>
 
@@ -636,7 +558,7 @@ export default async function SellerDashboardPage() {
                         label={product.name}
                         value={product.revenue}
                         max={maxProductRevenue}
-                        detail={`${number(product.orders)} ordenes · ${number(
+                        detail={`${number(product.orders)} ventas · ${number(
                           product.clicks
                         )} clicks · ${product.active ? "activo" : "inactivo"}`}
                       />
@@ -672,12 +594,12 @@ export default async function SellerDashboardPage() {
                       Links de afiliados
                     </p>
                     <p className="mt-2 text-2xl font-semibold">
-                      {number(productLinks.length + campaignLinks.length)}
+                      {number(productLinks.length)}
                     </p>
                   </div>
                   <div className="rounded-lg border border-orange-100 bg-orange-50 p-3 sm:p-4">
                     <p className="text-sm leading-6 text-orange-900">
-                      Si tienes clicks pero pocas ordenes, revisa precio, comision
+                      Si tienes clicks pero pocas ventas, revisa precio, comision
                       afiliada y claridad de la pagina de producto.
                     </p>
                   </div>
@@ -693,10 +615,10 @@ export default async function SellerDashboardPage() {
                 <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
                   <div>
                     <h2 className="text-base font-semibold text-slate-950">
-                      Ordenes recientes
+                      Ventas digitales recientes
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Ultimas ventas pagas con cliente y estado de entrega.
+                      Ultimas ventas pagas con cliente y estado de liquidacion.
                     </p>
                   </div>
                   <Link
@@ -715,14 +637,14 @@ export default async function SellerDashboardPage() {
                         <th className="px-5 py-3">Productos</th>
                         <th className="px-5 py-3">Fecha</th>
                         <th className="px-5 py-3 text-right">Bruto / neto</th>
-                        <th className="px-5 py-3">Entrega</th>
+                        <th className="px-5 py-3">Liquidacion</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {recentSettlements.length === 0 ? (
                         <tr>
                           <td className="px-5 py-8 text-slate-500" colSpan={5}>
-                            Todavia no hay ordenes registradas.
+                            Todavia no hay ventas digitales registradas.
                           </td>
                         </tr>
                       ) : (
@@ -745,7 +667,7 @@ export default async function SellerDashboardPage() {
                                     ? `${item.product.name} x${item.quantity}`
                                     : item.product.name
                                 )
-                                .join(", ") || "Orden"}
+                                .join(", ") || "Venta digital"}
                             </td>
                             <td className="px-5 py-4 text-slate-600">
                               {formatDate(settlement.createdAt)}
@@ -761,10 +683,10 @@ export default async function SellerDashboardPage() {
                             <td className="px-5 py-4">
                               <span
                                 className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusClasses(
-                                  settlement.fulfillmentStatus
+                                  settlement.status
                                 )}`}
                               >
-                                {fulfillmentLabel(settlement.fulfillmentStatus)}
+                                {statusLabel(settlement.status)}
                               </span>
                             </td>
                           </tr>
@@ -809,7 +731,7 @@ export default async function SellerDashboardPage() {
                           <p className="truncate font-medium text-slate-900">
                             {settlement.order.items
                               .map((item) => item.product.name)
-                              .join(", ") || "Orden"}
+                              .join(", ") || "Venta digital"}
                           </p>
                           <PaymentAvailabilityMeta
                             saleDate={settlement.createdAt}

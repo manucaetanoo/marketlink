@@ -157,14 +157,15 @@ model Product {
   sellerId String
   seller   User   @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
 
-  name      String          @db.VarChar(140)
-  desc      String?         @db.Text
-  price     Int
-  stock     Int             @default(0)
-  category  ProductCategory @default(OTHER)
-  sizes     String[]        @default([])
-  colors    Json?
-  imageUrls String[]
+  name                      String          @db.VarChar(140)
+  desc                      String?         @db.Text
+  digitalAccessInstructions String?         @db.Text
+  price                     Int
+  stock                     Int             @default(0)
+  category                  ProductCategory @default(OTHER)
+  sizes                     String[]        @default([])
+  colors                    Json?
+  imageUrls                 String[]
 
   shopifyShopDomain String? @db.VarChar(191)
   shopifyProductId  String? @db.VarChar(80)

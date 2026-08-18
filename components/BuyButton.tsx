@@ -54,7 +54,7 @@ export function BuyButton({
         "w-full cursor-pointer rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
       }
     >
-      {disabled ? disabledReason ?? "Sin stock" : "Comprar"}
+      {disabled ? disabledReason ?? "No disponible" : "Comprar"}
     </button>
   );
 }
