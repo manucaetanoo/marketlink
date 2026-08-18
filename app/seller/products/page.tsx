@@ -11,9 +11,5 @@ export default async function Page() {
     redirect("/login");
   }
 
-  if (role === "SELLER" && !session.user.storeSlug) {
-    redirect("/onboarding/seller");
-  }
-
   return <SellerProductsPage />;
 }

@@ -11,10 +11,6 @@ export default async function NewProductPage() {
     redirect("/login");
   }
 
-  if (!session.user.storeSlug) {
-    redirect("/onboarding/seller");
-  }
-
   return (
     <NewProductPageClient
       shopifyImportEnabled={isShopifyVisibleForEmail(session.user.email)}

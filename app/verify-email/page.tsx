@@ -63,7 +63,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
       title = "Email verificado";
       message =
         verificationToken.user.role === "SELLER"
-          ? "Tu email quedo verificado. Inicia sesion para continuar con el onboarding de seller."
+          ? "Tu email quedo verificado. Inicia sesion para ir a tu inicio."
           : "Tu email quedo verificado. Inicia sesion para seguir usando Afilink.";
     }
   }

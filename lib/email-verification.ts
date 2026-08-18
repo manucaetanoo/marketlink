@@ -20,7 +20,7 @@ export function getAppUrl(req: Request) {
 }
 
 export function getPostVerificationPath(role: Role) {
-  return role === "SELLER" ? "/onboarding/seller" : "/products";
+  return role === "SELLER" ? "/inicio" : "/products";
 }
 
 export async function sendEmailVerification({
