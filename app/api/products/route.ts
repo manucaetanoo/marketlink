@@ -31,9 +31,13 @@ export async function GET(req: Request) {
         name: true,
         desc: true,
         price: true,
-        stock: true,
         commissionValue: true,
         imageUrls: true,
+        _count: {
+          select: {
+            links: true,
+          },
+        },
       },
     }),
     prisma.product.count({ where }),
@@ -48,9 +52,9 @@ export async function GET(req: Request) {
       name: product.name,
       desc: product.desc,
       price: product.price,
-      stock: product.stock,
       commissionValue: product.commissionValue,
       imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
+      affiliateCount: product._count.links,
     })),
   });
 }

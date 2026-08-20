@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { normalizeImageUrl } from "@/lib/product-images";
@@ -169,8 +169,6 @@ export async function POST(req: Request) {
 
     revalidateTag("campaigns", "max");
     revalidateTag("stores", "max");
-    revalidatePath("/campaigns");
-    revalidatePath("/store");
 
     return NextResponse.json({ campaign }, { status: 201 });
   } catch (error) {

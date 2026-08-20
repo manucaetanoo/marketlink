@@ -10,6 +10,25 @@ const productCategories = [
 
 const categoriesWithSizes = new Set<string>();
 
+const accessExamples = [
+  {
+    title: "Link directo",
+    text: "Acceso inmediato: entra a https://...\nUsa este codigo o contraseña: ...\nSoporte: soporte@...",
+  },
+  {
+    title: "Moodle con clave",
+    text: "Curso en Moodle: https://...\nCrea tu cuenta con el mismo email usado en la compra.\nClave de matriculacion: ...\nSoporte: soporte@...",
+  },
+  {
+    title: "Alta manual",
+    text: "Vamos a crear tu usuario con el email usado en la compra.\nRecibiras los datos de acceso dentro de 24 horas habiles.\nSoporte: soporte@...",
+  },
+  {
+    title: "Licencia o archivo",
+    text: "Tu licencia/codigo de activacion es: ...\nDescarga o activa el producto desde: https://...\nSoporte: soporte@...",
+  },
+];
+
 type ProductCategory =
   | "CLOTHING"
   | "SHOES"
@@ -25,7 +44,6 @@ type ProductFormProduct = {
   desc: string | null;
   digitalAccessInstructions: string | null;
   price: number;
-  stock: number;
   category: ProductCategory;
   sizes: string[];
   colors: unknown;
@@ -48,7 +66,7 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     price: String(product.price),
     category: "DIGITAL" as ProductCategory,
     sizes: [] as string[],
-    imageUrls: product.imageUrls,
+    imageUrls: product.imageUrls.slice(0, 1),
     isActive: product.isActive,
     commissionValue: String(product.commissionValue),
   });
@@ -113,13 +131,14 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     setMessage(null);
 
     try {
-      const uploadedImages = await Promise.all(
-        Array.from(files)
-          .filter((file) => file.type.startsWith("image/"))
-          .map(uploadProductImage)
+      const imageFile = Array.from(files).find((file) =>
+        file.type.startsWith("image/")
       );
 
-      setField("imageUrls", [...form.imageUrls, ...uploadedImages].slice(0, 8));
+      if (!imageFile) return;
+
+      const uploadedImage = await uploadProductImage(imageFile);
+      setField("imageUrls", [uploadedImage]);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Error cargando imagen");
     }
@@ -130,6 +149,10 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
       "imageUrls",
       form.imageUrls.filter((_, currentIndex) => currentIndex !== index)
     );
+  }
+
+  function applyAccessExample(text: string) {
+    setField("digitalAccessInstructions", text);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -216,20 +239,35 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
         />
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-slate-700">
-          Acceso al producto digital
+      <div className="rounded-lg border border-orange-100 bg-orange-50/70 p-4">
+        <label className="text-sm font-semibold text-slate-900">
+          Instrucciones de acceso para el comprador
         </label>
         <textarea
           value={form.digitalAccessInstructions}
           onChange={(e) => setField("digitalAccessInstructions", e.target.value)}
-          rows={5}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          placeholder="Ej: Link del curso, pasos para crear usuario, email de soporte, instrucciones para activar la licencia."
+          rows={7}
+          className="mt-2 w-full rounded-lg border border-orange-100 bg-white px-3 py-2 text-sm leading-6"
+          placeholder="Explica exactamente que pasa despues del pago: link, usuario, clave, tiempo de alta manual o contacto de soporte."
         />
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-2 text-xs leading-5 text-orange-900">
           Esta informacion se envia al comprador cuando el pago queda confirmado.
+          Si el acceso no es automatico, indica el plazo y que usaras el email de
+          la compra para crear o habilitar el usuario.
         </p>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {accessExamples.map((example) => (
+            <button
+              key={example.title}
+              type="button"
+              onClick={() => applyAccessExample(example.text)}
+              className="rounded-lg border border-orange-100 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:border-orange-200 hover:bg-orange-50"
+            >
+              {example.title}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -336,13 +374,12 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
 
       <div>
         <div className="flex items-center justify-between gap-3">
-          <label className="text-sm font-medium text-slate-700">Imagenes</label>
+          <label className="text-sm font-medium text-slate-700">Imagen principal</label>
           <label className="inline-flex cursor-pointer items-center rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-            Subir imagen
+            Elegir imagen
             <input
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"
-              multiple
               className="hidden"
               onChange={(e) => addImages(e.target.files)}
             />
@@ -351,7 +388,7 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
 
         {form.imageUrls.length === 0 ? (
           <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-            Todavia no hay imagenes cargadas.
+            Todavia no hay imagen cargada.
           </div>
         ) : (
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

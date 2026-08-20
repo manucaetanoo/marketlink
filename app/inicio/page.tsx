@@ -16,6 +16,7 @@ import {
 import Navbar from "@/components/Navbar";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { getRenderableProductImageUrls } from "@/lib/product-images";
 
 function money(value: number) {
   return new Intl.NumberFormat("es-UY", {
@@ -187,6 +188,148 @@ function ListPanel({
   );
 }
 
+type MarketplaceProduct = {
+  id: string;
+  name: string;
+  price: number;
+  commissionValue: number;
+  imageUrls: string[];
+  isActive?: boolean;
+  linksCount?: number;
+};
+
+function ProductPreviewCard({
+  product,
+  mode,
+}: {
+  product: MarketplaceProduct;
+  mode: "seller" | "affiliate";
+}) {
+  const imageUrl = product.imageUrls?.[0] ?? null;
+  const earning = Math.round((product.price * product.commissionValue) / 100);
+
+  return (
+    <Link
+      href={mode === "seller" ? `/seller/products/${product.id}/edit` : `/products/${product.id}`}
+      className="group overflow-hidden rounded-lg border border-white/75 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-[0_18px_45px_rgba(15,23,42,0.12)]"
+    >
+      <div className="relative aspect-[4/2.7] overflow-hidden bg-gradient-to-br from-orange-100 via-white to-amber-50">
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm font-medium text-slate-500">
+            Producto digital
+          </div>
+        )}
+
+        <div className="absolute left-3 top-3 rounded-lg bg-orange-500 px-3 py-2 text-white shadow-lg shadow-orange-500/20">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-orange-100">
+            Comisión
+          </p>
+          <p className="text-xl font-black leading-none">{product.commissionValue}%</p>
+        </div>
+
+        {mode === "seller" && product.isActive !== undefined && (
+          <span className="absolute right-3 top-3 rounded-full bg-white/92 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+            {product.isActive ? "Activo" : "Inactivo"}
+          </span>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-slate-950 transition group-hover:text-orange-700">
+          {product.name}
+        </h3>
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium text-slate-500">Precio</p>
+            <p className="text-base font-semibold text-slate-950">
+              {money(product.price)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-medium text-slate-500">
+              {mode === "seller" ? "Afiliados" : "Ganás"}
+            </p>
+            <p className="text-base font-semibold text-emerald-700">
+              {mode === "seller" ? number(product.linksCount ?? 0) : money(earning)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function MarketplaceLiveBlock({
+  mode,
+  products,
+}: {
+  mode: "seller" | "affiliate";
+  products: MarketplaceProduct[];
+}) {
+  const isAffiliate = mode === "affiliate";
+  const title = isAffiliate
+    ? "Marketplace recomendado para vos"
+    : "Así se ven tus productos en el marketplace";
+  const description = isAffiliate
+    ? "Productos activos ordenados por oportunidad de comisión para que elijas rápido qué promocionar."
+    : "Una vista rápida de cómo se presenta tu catálogo cuando compradores y afiliados lo encuentran.";
+  const href = isAffiliate ? "/products" : "/seller/products";
+  const label = isAffiliate ? "Ver marketplace completo" : "Gestionar mis productos";
+
+  return (
+    <section className="mt-6 overflow-hidden rounded-xl border border-orange-200/70 bg-gradient-to-br from-slate-950 via-slate-900 to-orange-800 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[0.85fr_1.15fr] lg:p-7">
+        <div className="flex flex-col justify-between gap-6 text-white">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-200">
+              Marketplace vivo
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              {title}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-white/72">
+              {description}
+            </p>
+          </div>
+
+          <Link
+            href={href}
+            className="inline-flex w-fit items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-orange-50"
+          >
+            {label}
+            <FiArrowRight />
+          </Link>
+        </div>
+
+        {products.length === 0 ? (
+          <div className="rounded-lg border border-white/10 bg-white/10 p-5 text-sm leading-6 text-white/75">
+            {isAffiliate
+              ? "Todavía no hay productos activos para recomendar."
+              : "Todavía no tenés productos para mostrar en esta vista."}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-3">
+            {products.slice(0, 3).map((product) => (
+              <ProductPreviewCard
+                key={product.id}
+                product={product}
+                mode={mode}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 async function SellerStart({ userId, name }: { userId: string; name: string }) {
   const [products, settlements, items, links] = await Promise.all([
     prisma.product.findMany({
@@ -196,6 +339,8 @@ async function SellerStart({ userId, name }: { userId: string; name: string }) {
       select: {
         id: true,
         name: true,
+        price: true,
+        commissionValue: true,
         isActive: true,
         imageUrls: true,
         digitalAccessInstructions: true,
@@ -320,6 +465,21 @@ async function SellerStart({ userId, name }: { userId: string; name: string }) {
         <Metric label="Por liquidar" value={money(available)} detail={`${number(clicks)} clicks en links de afiliado`} />
       </section>
 
+      <MarketplaceLiveBlock
+        mode="seller"
+        products={products
+          .slice(0, 3)
+          .map((product) => ({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            commissionValue: product.commissionValue,
+            isActive: product.isActive,
+            linksCount: product._count.links,
+            imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
+          }))}
+      />
+
       <section className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <Recommendation {...recommendation} />
         <ListPanel title="Últimas ventas" empty={settlements.length === 0}>
@@ -378,7 +538,13 @@ async function AffiliateStart({ userId, name }: { userId: string; name: string }
       where: { isActive: true },
       orderBy: [{ commissionValue: "desc" }, { createdAt: "desc" }],
       take: 3,
-      select: { id: true, name: true, price: true, commissionValue: true },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        commissionValue: true,
+        imageUrls: true,
+      },
     }),
   ]);
 
@@ -461,6 +627,17 @@ async function AffiliateStart({ userId, name }: { userId: string; name: string }
         <Metric label="Ventas atribuidas" value={number(sales)} detail="Compras confirmadas desde tus links" />
         <Metric label="Comisión generada" value={money(generated)} detail={`${money(available)} por liquidar`} />
       </section>
+
+      <MarketplaceLiveBlock
+        mode="affiliate"
+        products={products.map((product) => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          commissionValue: product.commissionValue,
+          imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
+        }))}
+      />
 
       <section className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <Recommendation {...recommendation} />

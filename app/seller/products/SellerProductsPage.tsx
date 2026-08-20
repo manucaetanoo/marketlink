@@ -12,7 +12,6 @@ type SellerProduct = {
   name: string;
   desc: string | null;
   price: number;
-  stock: number;
   commissionValue: number;
   commissionType: "PERCENT" | "FIXED";
   platformCommissionValue: number;

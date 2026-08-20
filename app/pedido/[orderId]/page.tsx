@@ -287,7 +287,7 @@ export default async function PedidoDetallePage({
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950">Acceso digital</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Datos para habilitar el acceso</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
                 <dt className="font-medium text-slate-500">Comprador</dt>

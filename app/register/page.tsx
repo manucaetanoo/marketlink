@@ -177,8 +177,8 @@ export default function RegisterPage() {
               />
               <label className="text-slate-600 ml-3 block text-sm">
                  Acepto{" "}
-                 <Link href={"/terms"}>
-                <span className="text-[#F78211] font-medium">
+                 <Link target="_blank" href={"/terms"}>
+                <span  className="text-[#F78211] font-medium"> 
                   terminos y condiciones
                 </span>
                 </Link>

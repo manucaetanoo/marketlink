@@ -8,7 +8,7 @@ import { getRenderableProductImageUrls } from "@/lib/product-images";
 
 export const metadata: Metadata = {
   title: "Productos - Afilink",
-  description: "Explora productos con alto potencial de conversion y, si eres afiliado, prioriza los que te dejan mejores comisiones por venta.",
+  description: "Explora productos digitales disponibles en Afilink.",
 };
 
 export const revalidate = 60;
@@ -29,9 +29,13 @@ async function getActiveProducts() {
         name: true,
         desc: true,
         price: true,
-        stock: true,
         commissionValue: true,
         imageUrls: true,
+        _count: {
+          select: {
+            links: true,
+          },
+        },
       },
     }),
     prisma.product.count({ where }),
@@ -45,9 +49,9 @@ async function getActiveProducts() {
       name: product.name,
       desc: product.desc,
       price: product.price,
-      stock: product.stock,
       commissionValue: product.commissionValue,
       imageUrls: getRenderableProductImageUrls(product.imageUrls, 1),
+      affiliateCount: product._count.links,
     })),
   };
 }
@@ -73,11 +77,11 @@ export default async function ProductsPage() {
                 Catalogo de productos
               </p>
               <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-                Productos listos para vender
+                Productos digitales
               </h1>
               <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-600">
-                Explora productos con alto potencial de conversion y, si eres afiliado,
-                prioriza los que te dejan mejores comisiones por venta.
+                Explorá productos disponibles, revisá los detalles y comprá desde un
+                checkout seguro.
               </p>
             </div>
 

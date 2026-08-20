@@ -24,7 +24,6 @@ type CampaignFormValues = {
 };
 
 type Props = {
-  storeSlug?: string | null;
   defaultValues?: CampaignFormValues;
   campaignId?: string;
 };
@@ -52,7 +51,7 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Ocurrio un error";
 }
 
-export default function CampaignForm({ storeSlug, defaultValues, campaignId }: Props) {
+export default function CampaignForm({ defaultValues, campaignId }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -68,7 +67,6 @@ export default function CampaignForm({ storeSlug, defaultValues, campaignId }: P
     endsAt: defaultValues?.endsAt || "",
   });
   const previewSlug = form.slug.trim() || "slug-de-la-campaña";
-  const previewStoreSlug = storeSlug?.trim() || "tu-tienda";
 
   const handleChange = (key: FormKey, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -127,10 +125,10 @@ export default function CampaignForm({ storeSlug, defaultValues, campaignId }: P
       return;
     }
     
-    const nextCampaignId = campaignId ?? data?.campaign?.id;
+  const nextCampaignId = campaignId ?? data?.campaign?.id;
     
-    router.push(
-      campaignId || !storeSlug
+  router.push(
+      campaignId || !nextCampaignId
         ? "/seller/campaigns"
         : `/seller/campaigns/${nextCampaignId}/products`
     );
@@ -195,13 +193,8 @@ export default function CampaignForm({ storeSlug, defaultValues, campaignId }: P
               />
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                 <span className="font-semibold text-slate-700">
-                  afilink.com/store/{previewStoreSlug}/campaign/{previewSlug}
+                  Identificador interno: {previewSlug}
                 </span>
-                {!storeSlug && (
-                  <p className="mt-1 text-orange-700">
-                    Configura el slug de tu tienda para ver la URL final.
-                  </p>
-                )}
               </div>
             </div>
 

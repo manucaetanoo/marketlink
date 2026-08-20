@@ -27,6 +27,25 @@ const productCategories = [
 
 const categoriesWithSizes = new Set(["CLOTHING", "SHOES"]);
 
+const accessExamples = [
+  {
+    title: "Link directo",
+    text: "Link del curso, archivo o area privada + contraseña/codigo si aplica.",
+  },
+  {
+    title: "Moodle con clave",
+    text: "URL de Moodle + pasos para crear cuenta + clave de matriculacion.",
+  },
+  {
+    title: "Alta manual",
+    text: "Avisa que crearas el usuario con el email de compra e indica el plazo.",
+  },
+  {
+    title: "Licencia o archivo",
+    text: "Codigo de activacion, link de descarga y contacto de soporte.",
+  },
+];
+
 type ShopifyConnection = {
   shopDomain: string;
   scope?: string | null;
@@ -90,7 +109,7 @@ function NewProductPageContent({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [category, setCategory] = useState("DIGITAL");
+  const category = "DIGITAL";
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [customSize, setCustomSize] = useState("");
   const [commissionValue, setCommissionValue] = useState(10);
@@ -285,14 +304,13 @@ function NewProductPageContent({
       if (!price || price <= 0) throw new Error("Debes ingresar un precio valido");
 
       const imageUrls =
-        imageFiles.length > 0 ? await Promise.all(imageFiles.map(uploadImage)) : [];
+        imageFiles.length > 0 ? [await uploadImage(imageFiles[0])] : [];
 
       const payload = {
         name,
         desc,
         digitalAccessInstructions,
         price,
-        stock: 0,
         category,
         sizes: shouldShowSizes ? selectedSizes : [],
         colors: [],
@@ -733,19 +751,35 @@ function NewProductPageContent({
                               className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900"
                             >
                               <DocumentTextIcon className="h-4 w-4 text-orange-500" />
-                              Acceso al producto digital
+                              Instrucciones de acceso para el comprador
                             </label>
 
                             <textarea
                               id="digitalAccessInstructions"
                               name="digitalAccessInstructions"
-                              rows={5}
-                              placeholder="Ej: Link del curso, pasos para crear usuario, email de soporte, instrucciones para activar la licencia."
+                              rows={7}
+                              placeholder="Explica exactamente que pasa despues del pago: link, usuario, clave, tiempo de alta manual o contacto de soporte."
                               className="block w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
                             />
                             <p className="mt-2 text-sm leading-6 text-orange-900">
                               Esta informacion es privada y se envia al comprador cuando el pago queda confirmado.
+                              Si el acceso no es automatico, indica el plazo y que usaras el email de la compra.
                             </p>
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                              {accessExamples.map((example) => (
+                                <div
+                                  key={example.title}
+                                  className="rounded-xl border border-orange-100 bg-white px-3 py-2"
+                                >
+                                  <p className="text-xs font-semibold text-slate-900">
+                                    {example.title}
+                                  </p>
+                                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                                    {example.text}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </section>
@@ -754,25 +788,24 @@ function NewProductPageContent({
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <h2 className="text-base font-semibold text-slate-950">
-                              Imagenes del producto
+                              Imagen principal del producto
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
-                              PNG, JPG o WEBP. Puedes seleccionar varias imagenes.
+                              PNG, JPG o WEBP. Se muestra una sola imagen en la ficha publica.
                             </p>
                           </div>
 
                           <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
                             <PlusIcon className="h-4 w-4" />
-                            Agregar imagenes
+                            Elegir imagen
                             <input
                               type="file"
                               name="images"
                               accept="image/png,image/jpeg,image/jpg,image/webp"
-                              multiple
                               className="hidden"
                               onChange={(e) => {
-                                const files = Array.from(e.target.files ?? []);
-                                setImageFiles((current) => [...current, ...files]);
+                                const file = e.target.files?.[0];
+                                setImageFiles(file ? [file] : []);
                                 e.currentTarget.value = "";
                               }}
                             />
@@ -787,21 +820,20 @@ function NewProductPageContent({
                               </div>
 
                               <h3 className="mt-4 text-sm font-semibold text-slate-900">
-                                Todavia no hay imagenes cargadas
+                                Todavia no hay imagen cargada
                               </h3>
                               <p className="mt-1 max-w-sm text-sm text-slate-500">
-                                Agrega una o varias fotos para mostrar el producto desde distintos angulos.
+                                Agrega una imagen clara para identificar el producto.
                               </p>
                             </div>
                           ) : (
                             <div>
                               <div className="mb-3 flex items-center justify-between gap-3 text-sm">
                                 <span className="font-semibold text-slate-900">
-                                  {imageFiles.length} imagen
-                                  {imageFiles.length > 1 ? "es seleccionadas" : " seleccionada"}
+                                  Imagen seleccionada
                                 </span>
                                 <span className="text-xs font-medium text-slate-500">
-                                  Las nuevas se suman a las anteriores
+                                  Reemplazala eligiendo otra imagen
                                 </span>
                               </div>
 
@@ -971,7 +1003,7 @@ function NewProductPageContent({
                             Importar productos desde Shopify
                           </h2>
                           <p className="mt-1 text-sm text-slate-500">
-                            Se crearan productos nuevos con precio, stock, imagenes y descripcion.
+                            Se crearan productos nuevos con precio, imagenes y descripcion.
                           </p>
                           <p className="mt-1 text-sm text-slate-400">
                             *Se importarán todos los productos de tu cuenta.*
@@ -1130,7 +1162,7 @@ function NewProductPageContent({
                             Importar productos desde WooCommerce
                           </h2>
                           <p className="mt-1 text-sm text-slate-500">
-                            Se crearan productos con precio, stock, imagenes y variantes.
+                            Se crearan productos con precio, imagenes y variantes.
                           </p>
                         </div>
 
@@ -1258,7 +1290,7 @@ function NewProductPageContent({
 
                         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                           Cuando una compra de estos productos se pague en Afilink, se creara
-                          una orden pagada en WooCommerce para descontar stock.
+                          una orden pagada en WooCommerce para mantener sincronizada la tienda.
                         </div>
 
                         {wooCommerceConnection && (
@@ -1405,8 +1437,8 @@ function NewProductPageContent({
                         </div>
 
                         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                          Fenicio no expone stock exacto en este feed. Se importara stock segun
-                          las presentaciones marcadas como disponibles.
+                          Fenicio importa los productos segun las presentaciones marcadas como
+                          disponibles en el feed.
                         </div>
 
                         <div className="border-t border-slate-200 pt-4">

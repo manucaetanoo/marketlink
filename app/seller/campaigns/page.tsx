@@ -80,7 +80,6 @@ export default async function SellerCampaignsPage() {
 
             <SellerCampaignsList
               campaigns={initialCampaigns}
-              storeSlug={session.user.storeSlug}
               pageSize={SELLER_CAMPAIGNS_PAGE_LIMIT}
               hasMoreInitial={campaigns.length > SELLER_CAMPAIGNS_PAGE_LIMIT}
             />

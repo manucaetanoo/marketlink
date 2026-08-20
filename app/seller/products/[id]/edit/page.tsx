@@ -34,7 +34,6 @@ export default async function EditProductPage({ params }: Props) {
       desc: true,
       digitalAccessInstructions: true,
       price: true,
-      stock: true,
       category: true,
       sizes: true,
       colors: true,

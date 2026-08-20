@@ -125,7 +125,7 @@ const integrations = [
   {
     name: "Productos digitales",
     logo: "/img/logosbg.png",
-    description: "Publicá cursos, ebooks, licencias, membresías, plantillas o recursos descargables sin stock ni logística.",
+    description: "Publicá cursos, ebooks, licencias, membresías, plantillas o recursos descargables con entrega digital.",
   },
 ];
 

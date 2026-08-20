@@ -22,7 +22,7 @@ model User {
   storeSlug String? @unique @db.VarChar(80)
 
   // Comision de plataforma por empresa
-  platformCommissionValue Int            @default(5)
+  platformCommissionValue Int            @default(10)
   platformCommissionType  CommissionType @default(PERCENT)
 
   // Datos de cobro / liquidacion

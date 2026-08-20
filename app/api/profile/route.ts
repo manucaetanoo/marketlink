@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -149,6 +150,8 @@ export async function POST(req: Request) {
       updatedAt: true,
     },
   });
+
+  revalidateTag("products", "max");
 
   return NextResponse.json({ ok: true, user: updatedUser });
 }

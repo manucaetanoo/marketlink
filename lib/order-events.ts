@@ -49,7 +49,7 @@ function accessInstructionsHtml(
   return `
           <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:18px;margin:20px 0;">
             <p style="margin:0 0 12px;color:#9a3412;font-size:13px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
-              Acceso a tus productos digitales
+              Instrucciones de acceso
             </p>
             ${instructions
               .map(
@@ -320,7 +320,16 @@ export async function markOrderPaidAndNotify({
             </p>
           </div>
 
-          ${accessHtml}
+          ${accessHtml || `
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:18px;margin:20px 0;">
+            <p style="margin:0 0 8px;color:#9a3412;font-size:13px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
+              Acceso digital
+            </p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#431407;">
+              El vendedor va a coordinar el acceso usando los datos de contacto de la compra.
+            </p>
+          </div>
+          `}
 
           <p style="margin:20px 0;font-size:15px;line-height:1.6;color:#374151;">
             Puedes revisar el detalle de tu compra desde el siguiente botón:
@@ -427,6 +436,9 @@ export async function markOrderPaidAndNotify({
         <strong>Cliente:</strong> ${result.order.buyerName ?? "Sin nombre"}
       </p>
       <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#18181b;">
+        <strong>Email:</strong> ${result.order.buyerEmail ?? "Sin email"}
+      </p>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:#18181b;">
         <strong>Teléfono:</strong> ${result.order.buyerPhone ?? "Sin teléfono"}
       </p>
       ${ result.order.shippingNotes ? `
@@ -454,7 +466,7 @@ export async function markOrderPaidAndNotify({
 </div>
 
             `,
-        text: `Se aprobo una venta de ${seller.products.join(", ")}. Total: ${formatMoney(seller.total)}. Neto vendedor: ${formatMoney(seller.net)}. Cliente: ${result.order.buyerName ?? "Sin nombre"} - ${result.order.buyerPhone ?? "Sin telefono"}.`,
+        text: `Se aprobo una venta de ${seller.products.join(", ")}. Total: ${formatMoney(seller.total)}. Neto vendedor: ${formatMoney(seller.net)}. Cliente: ${result.order.buyerName ?? "Sin nombre"}. Email: ${result.order.buyerEmail ?? "Sin email"}. Telefono: ${result.order.buyerPhone ?? "Sin telefono"}.`,
       })
     );
   }

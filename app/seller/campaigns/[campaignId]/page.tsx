@@ -20,11 +20,6 @@ export default async function EditSellerCampaignPage({ params }: Props) {
 
   const campaign = await prisma.campaign.findFirst({
     where: { id: campaignId, sellerId: session.user.id },
-    include: {
-      seller: {
-        select: { storeSlug: true },
-      },
-    },
   });
 
   if (!campaign) notFound();
@@ -49,7 +44,6 @@ export default async function EditSellerCampaignPage({ params }: Props) {
 
             <CampaignForm
               campaignId={campaign.id}
-              storeSlug={campaign.seller.storeSlug}
               defaultValues={{
                 title: campaign.title,
                 slug: campaign.slug,

@@ -7,7 +7,6 @@ type Product = {
   name: string;
   desc: string | null;
   price: number;
-  stock?: number;
   commissionValue: number;
   commissionType: "PERCENT" | "FIXED";
   platformCommissionValue?: number;
@@ -75,11 +74,6 @@ export default function ItemSeller({
           {product.isActive !== undefined && (
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
               {product.isActive ? "Activo" : "Inactivo"}
-            </span>
-          )}
-          {product.stock !== undefined && (
-            <span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 ring-1 ring-orange-100">
-              Stock: {product.stock}
             </span>
           )}
         </div>

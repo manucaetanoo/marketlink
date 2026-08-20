@@ -24,11 +24,6 @@ export async function GET(req: NextRequest, context: Props) {
             startsAt: true,
             endsAt: true,
             slug: true,
-            seller: {
-              select: {
-                storeSlug: true,
-              },
-            },
           },
         },
       },
@@ -38,9 +33,9 @@ export async function GET(req: NextRequest, context: Props) {
       return NextResponse.json({ error: "Link inválido" }, { status: 404 });
     }
 
-    if (!link.campaign?.seller?.storeSlug || !link.campaign?.slug) {
+    if (!link.campaign?.slug) {
       return NextResponse.json(
-        { error: "La campaña no tiene una URL pública válida" },
+        { error: "La campaña no tiene una URL valida" },
         { status: 400 }
       );
     }
@@ -81,7 +76,7 @@ export async function GET(req: NextRequest, context: Props) {
     });
 
     const url = new URL(req.url);
-    url.pathname = `/store/${link.campaign.seller.storeSlug}/campaign/${link.campaign.slug}`;
+    url.pathname = "/products";
     url.searchParams.set("ref", code);
 
     const res = NextResponse.redirect(url, { status: 302 });

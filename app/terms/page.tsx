@@ -38,7 +38,7 @@ const sections = [
   {
     title: "Funcionamiento de ventas y campañas",
     paragraphs: [
-      "Los sellers pueden publicar productos y crear campañas para que sean difundidas por afiliados. Las condiciones comerciales de cada producto, incluyendo precio, stock, descripción, imágenes, talles, disponibilidad, comisiones y cualquier otra información relevante, deberán ser claras, veraces y mantenerse actualizadas por el seller.",
+      "Los sellers pueden publicar productos y crear campañas para que sean difundidas por afiliados. Las condiciones comerciales de cada producto, incluyendo precio, descripción, imágenes, talles, disponibilidad, comisiones y cualquier otra información relevante, deberán ser claras, veraces y mantenerse actualizadas por el seller.",
       "Las comisiones de afiliación se generan únicamente cuando la plataforma registra una venta válida y puede atribuirla al enlace o campaña correspondiente. La existencia de un clic, visita o interacción previa no garantiza por sí sola el derecho a cobrar una comisión. Afilink podrá revisar, ajustar o cancelar comisiones cuando existan errores técnicos, operaciones anuladas, devoluciones, contracargos, fraude, abuso del sistema o incumplimiento de estos términos.",
       "Los afiliados deberán promocionar productos de forma honesta y transparente. No podrán utilizar spam, publicidad engañosa, compras simuladas, automatizaciones indebidas, manipulación de métricas, suplantación de identidad, tráfico artificial o cualquier práctica destinada a obtener comisiones de manera irregular.",
     ],
@@ -62,7 +62,7 @@ const sections = [
   {
     title: "Responsabilidad del seller",
     paragraphs: [
-      "El seller es responsable por los productos que publica, por la exactitud de sus descripciones, por la disponibilidad de stock, por el cumplimiento de precios informados, por la entrega de los productos vendidos y por la atención de reclamos relacionados con calidad, garantía, cambios, devoluciones o cualquier otra obligación asociada a su actividad comercial.",
+      "El seller es responsable por los productos que publica, por la exactitud de sus descripciones, por la disponibilidad informada, por el cumplimiento de precios publicados, por la entrega de los productos vendidos y por la atención de reclamos relacionados con calidad, garantía, cambios, devoluciones o cualquier otra obligación asociada a su actividad comercial.",
       "Queda prohibido publicar productos ilegales, falsificados, fraudulentos, peligrosos, engañosos, que vulneren derechos de terceros o que incumplan normativa aplicable. Afilink podrá pausar, eliminar o restringir publicaciones y cuentas cuando detecte contenido incompatible con estas condiciones o con la seguridad de la plataforma.",
       "Cuando corresponda, el seller deberá cumplir con las normas de defensa del consumidor, información clara sobre productos y servicios, garantías, impuestos, facturación y demás obligaciones legales aplicables a su actividad.",
     ],

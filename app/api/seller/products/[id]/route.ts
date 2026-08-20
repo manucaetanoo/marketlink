@@ -43,7 +43,6 @@ export async function PATCH(
       desc?: string | null;
       digitalAccessInstructions?: string | null;
       price?: number;
-      stock?: number;
       isActive?: boolean;
       category?: (typeof productCategories)[number];
       sizes?: string[];
@@ -136,7 +135,7 @@ export async function PATCH(
     }
 
     if (body.imageUrls !== undefined) {
-      data.imageUrls = normalizeProductImageUrls(body.imageUrls);
+      data.imageUrls = normalizeProductImageUrls(body.imageUrls).slice(0, 1);
     }
 
     const where = user.role === "ADMIN" ? { id } : { id, sellerId: user.id };
@@ -150,7 +149,6 @@ export async function PATCH(
         desc: true,
         digitalAccessInstructions: true,
         price: true,
-        stock: true,
         category: true,
         sizes: true,
         colors: true,
@@ -160,20 +158,6 @@ export async function PATCH(
         sellerId: true,
         imageUrls: true,
         updatedAt: true,
-        seller: {
-          select: {
-            storeSlug: true,
-          },
-        },
-        campaignProducts: {
-          select: {
-            campaign: {
-              select: {
-                slug: true,
-              },
-            },
-          },
-        },
       },
     });
 
@@ -181,21 +165,9 @@ export async function PATCH(
     revalidateTag("campaigns", "max");
     revalidateTag("stores", "max");
     revalidatePath("/products");
-    revalidatePath("/campaigns");
-    revalidatePath("/store");
     revalidatePath(`/products/${updated.id}`);
-    if (updated.seller.storeSlug) {
-      revalidatePath(`/store/${updated.seller.storeSlug}`);
-      for (const campaignProduct of updated.campaignProducts) {
-        revalidatePath(
-          `/store/${updated.seller.storeSlug}/campaign/${campaignProduct.campaign.slug}`
-        );
-      }
-    }
 
-    const { seller: _seller, campaignProducts: _campaignProducts, ...product } = updated;
-
-    return NextResponse.json({ ok: true, product });
+    return NextResponse.json({ ok: true, product: updated });
   } catch (e: unknown) {
     const msg = getErrorMessage(e);
     const status =
@@ -255,8 +227,6 @@ export async function DELETE(
     revalidateTag("campaigns", "max");
     revalidateTag("stores", "max");
     revalidatePath("/products");
-    revalidatePath("/campaigns");
-    revalidatePath("/store");
     revalidatePath(`/products/${product.id}`);
 
     return NextResponse.json({ ok: true });

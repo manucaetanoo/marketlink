@@ -17,7 +17,6 @@ export type SellerCampaignListItem = {
 
 type Props = {
   campaigns: SellerCampaignListItem[];
-  storeSlug?: string | null;
   pageSize: number;
   hasMoreInitial: boolean;
 };
@@ -54,7 +53,6 @@ function normalizeCampaign(campaign: {
 
 export default function SellerCampaignsList({
   campaigns,
-  storeSlug,
   pageSize,
   hasMoreInitial,
 }: Props) {
@@ -149,12 +147,6 @@ export default function SellerCampaignsList({
                   className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   Productos
-                </Link>
-                <Link
-                  href={`/store/${storeSlug || "store"}/campaign/${campaign.slug}?preview=public`}
-                  className="rounded-lg bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
-                >
-                  Vista previa
                 </Link>
                 <DeleteCampaignButton
                   campaignId={campaign.id}

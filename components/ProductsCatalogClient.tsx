@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
+import {
+  FiArrowRight,
+  FiDollarSign,
+  FiLink,
+  FiPackage,
+  FiSearch,
+  FiShoppingBag,
+  FiTrendingUp,
+} from "react-icons/fi";
 import ProductCard, { type ProductCardProduct } from "@/components/ProductCard";
 
 type Props = {
@@ -23,6 +33,136 @@ const getCommissionEarning = (price: number, commissionValue: number) => {
   return Math.round((price * commissionValue) / 100);
 };
 
+function AudiencePanel({
+  role,
+  totalItems,
+  topCommission,
+  topEarning,
+}: {
+  role?: string | null;
+  totalItems: number;
+  topCommission: number;
+  topEarning: number;
+}) {
+  const normalizedRole = String(role ?? "").toUpperCase();
+  const isAffiliate = normalizedRole === "AFFILIATE";
+  const isSeller = normalizedRole === "SELLER";
+  const isAdmin = normalizedRole === "ADMIN";
+
+  if (isAffiliate) {
+    return (
+      <section className="mt-2 overflow-hidden rounded-xl border border-orange-200 bg-white shadow-sm">
+        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="p-5 sm:p-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+              <FiLink />
+              Afiliados
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">
+              Elegi productos por oportunidad de comision.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              En esta vista la comision y la ganancia estimada tienen prioridad,
+              porque tu trabajo es comparar que conviene promocionar.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 border-t border-orange-100 bg-orange-50/70 lg:border-l lg:border-t-0">
+            <div className="p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+                Mayor comision
+              </p>
+              <p className="mt-2 text-3xl font-black text-slate-950">
+                {topCommission}%
+              </p>
+            </div>
+            <div className="border-l border-orange-100 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+                Ganas hasta
+              </p>
+              <p className="mt-2 text-3xl font-black text-slate-950">
+                {formatMoney(topEarning)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (isSeller || isAdmin) {
+    return (
+      <section className="mt-2 grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+            <FiPackage />
+            Vista de catalogo
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">
+            Mira como ven tus productos compradores y afiliados.
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            Este marketplace muestra productos activos. Para crear, editar o
+            ajustar comisiones, usa tu panel de vendedor.
+          </p>
+        </div>
+        <Link
+          href="/seller/products"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Gestionar productos
+          <FiArrowRight />
+        </Link>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
+        <FiShoppingBag />
+        Marketplace
+      </div>
+      <h2 className="mt-4 text-2xl font-semibold tracking-tight text-slate-950">
+        Explora productos digitales listos para comprar.
+      </h2>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+        Entrá al producto, revisá los detalles y continuá la compra desde el checkout.
+      </p>
+      <div className="mt-5 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+        {totalItems} {totalItems === 1 ? "producto disponible" : "productos disponibles"}
+      </div>
+    </section>
+  );
+}
+
+function AffiliateSignupPanel() {
+  return (
+    <section className="mt-12 overflow-hidden rounded-2xl border border-orange-200 bg-white shadow-sm">
+      <div className="grid gap-0 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div className="p-5 sm:p-6">
+          <p className="text-sm font-semibold text-orange-700">
+            ¿Queres ganar comision?
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Registrate como afiliado para generar tus propios links y ganar por las
+            ventas que lleguen desde tus recomendaciones.
+          </p>
+        </div>
+        <div className="border-t border-orange-100 bg-orange-50/70 p-5 lg:border-l lg:border-t-0">
+          <Link
+            href="/register"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 lg:w-auto"
+          >
+            Crear cuenta de afiliado
+            <FiArrowRight />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function ProductsCatalogClient({
   products,
   pageSize,
@@ -36,8 +176,10 @@ export default function ProductsCatalogClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
   const role = data?.user?.role;
+  const isVisitor = !role;
   const showAffiliateHighlights = role === "AFFILIATE";
-  const showCommissionBadge = role === "AFFILIATE" || role === "SELLER";
+  const isSellerCatalogView = role === "SELLER" || role === "ADMIN";
+  const showCommissionBadge = showAffiliateHighlights || isSellerCatalogView;
   const topCommission = items.length
     ? Math.max(...items.map((product) => Number(product.commissionValue || 0)))
     : 0;
@@ -95,25 +237,36 @@ export default function ProductsCatalogClient({
 
   return (
     <>
-      <section aria-labelledby="filter-heading" className="border-t border-orange-100 pt-6">
+      <AudiencePanel
+        role={role}
+        totalItems={totalItems}
+        topCommission={topCommission}
+        topEarning={topEarning}
+      />
+
+      <section aria-labelledby="filter-heading" className="mt-8 border-t border-orange-100 pt-6">
         <h2 id="filter-heading" className="sr-only">
-          Product filters
+          Resumen del catalogo
         </h2>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <div className="inline-flex items-center rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm">
-              {items.length} {items.length === 1 ? "producto" : "productos"}
+              <FiSearch className="mr-2 text-orange-600" />
+              {totalItems} {totalItems === 1 ? "producto activo" : "productos activos"}
             </div>
             <div className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 shadow-sm">
+              <FiShoppingBag className="mr-2" />
               Desde {formatMoney(minPrice)}
             </div>
             {showAffiliateHighlights && (
               <>
                 <div className="inline-flex items-center rounded-full border border-orange-200 bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm">
+                  <FiTrendingUp className="mr-2" />
                   Hasta {topCommission}% de comision
                 </div>
                 <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
+                  <FiDollarSign className="mr-2 text-emerald-600" />
                   Ganas hasta {formatMoney(topEarning)} por venta
                 </div>
               </>
@@ -121,7 +274,7 @@ export default function ProductsCatalogClient({
           </div>
 
           <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500 shadow-sm">
-            Ordenados por oportunidad comercial
+            {isVisitor ? "Catálogo actualizado" : "Ordenados por oportunidad comercial"}
           </div>
         </div>
       </section>
@@ -159,6 +312,13 @@ export default function ProductsCatalogClient({
                   product={product}
                   showAffiliateHighlights={showAffiliateHighlights}
                   showCommissionBadge={showCommissionBadge}
+                  primaryActionLabel={
+                    role === "AFFILIATE"
+                      ? "Promocionar"
+                      : isSellerCatalogView
+                        ? "Ver detalle"
+                        : "Comprar"
+                  }
                 />
               ))}
             </div>
@@ -241,6 +401,8 @@ export default function ProductsCatalogClient({
               </div>
             </section>
           )}
+
+          {isVisitor && <AffiliateSignupPanel />}
         </>
       )}
     </>

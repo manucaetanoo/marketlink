@@ -61,7 +61,6 @@ export async function GET(req: Request) {
           desc: true,
           digitalAccessInstructions: true,
           price: true,
-          stock: true,
           category: true,
           sizes: true,
           colors: true,
@@ -117,12 +116,11 @@ export async function POST(req: Request) {
       body.digitalAccessInstructions ?? ""
     ).trim();
     const price = Number(body.price);
-    const stock = 0;
     const commissionValue = Number(body.commissionValue);
     const category = "DIGITAL";
     const sizes = normalizeSizes(body.sizes);
 
-    const imageUrls = normalizeProductImageUrls(body.imageUrls);
+    const imageUrls = normalizeProductImageUrls(body.imageUrls).slice(0, 1);
 
     if (name.length < 3) {
       return NextResponse.json(
@@ -176,7 +174,6 @@ export async function POST(req: Request) {
           ? digitalAccessInstructions
           : null,
         price,
-        stock,
         category: category as (typeof productCategories)[number],
         sizes: categoriesWithSizes.has(category) ? sizes : [],
         colors: [],
@@ -191,7 +188,6 @@ export async function POST(req: Request) {
         category: true,
         sizes: true,
         colors: true,
-        stock: true,
         commissionValue: true,
         commissionType: true,
       },
@@ -201,8 +197,6 @@ export async function POST(req: Request) {
     revalidateTag("campaigns", "max");
     revalidateTag("stores", "max");
     revalidatePath("/products");
-    revalidatePath("/campaigns");
-    revalidatePath("/store");
 
     return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
   } catch (e: unknown) {

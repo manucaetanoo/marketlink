@@ -5,18 +5,12 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import CampaignForm from "@/components/campaigns/CampaignForm";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 
 export default async function NewSellerCampaignPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) redirect("/login");
   if (session.user.role !== "SELLER") redirect("/");
-
-  const seller = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { storeSlug: true },
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -46,7 +40,7 @@ export default async function NewSellerCampaignPage() {
               </div>
             </div>
 
-            <CampaignForm storeSlug={seller?.storeSlug ?? null} />
+            <CampaignForm />
           </div>
         </main>
       </div>
