@@ -16,7 +16,6 @@ type SellerProduct = {
   commissionType: "PERCENT" | "FIXED";
   platformCommissionValue: number;
   platformCommissionType: "PERCENT" | "FIXED";
-  colors: unknown;
   imageUrls: string[];
   isActive: boolean;
 };

@@ -244,16 +244,13 @@ export default async function AffiliateDashboardPage() {
   const availableCommission = paidOrderCommissions
     .filter((commission) => commission.status === "APPROVED")
     .reduce((total, commission) => total + commission.amount, 0);
-  const retainedCommission = paidOrderCommissions
-    .filter((commission) => commission.status === "PENDING")
-    .reduce((total, commission) => total + commission.amount, 0);
-  const retainedCommissionCount = paidOrderCommissions.filter(
-    (commission) => commission.status === "PENDING"
-  ).length;
   const paidCommission = paidOrderCommissions
     .filter((commission) => commission.status === "PAID")
     .reduce((total, commission) => total + commission.amount, 0);
-  const generatedCommission = retainedCommission + availableCommission + paidCommission;
+  const generatedCommission = paidOrderCommissions.reduce(
+    (total, commission) => total + commission.amount,
+    0
+  );
 
   const currentItems = paidItems.filter((item) => new Date(item.createdAt) >= currentStart);
   const previousItems = paidItems.filter(
@@ -318,7 +315,7 @@ export default async function AffiliateDashboardPage() {
 
             <section
               id="payments"
-              className="mt-8 grid scroll-mt-24 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
+              className="mt-8 grid scroll-mt-24 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
             >
               <StatCard
                 icon={<FiMousePointer />}
@@ -338,15 +335,8 @@ export default async function AffiliateDashboardPage() {
                 icon={<FiDollarSign />}
                 label="Comision generada"
                 value={money(generatedCommission)}
-                detail="Total entre retenido, por liquidar y ya liquidado"
+                detail="Total generado por ventas pagas"
                 tone="emerald"
-              />
-              <StatCard
-                icon={<FiClock />}
-                label="Retenido"
-                value={money(retainedCommission)}
-                detail={`${number(retainedCommissionCount)} comisiones pendientes`}
-                tone="slate"
               />
               <StatCard
                 icon={<FiClock />}
@@ -391,8 +381,8 @@ export default async function AffiliateDashboardPage() {
                     <FiTrendingUp className="mt-0.5 text-orange-600" />
                     <p className="text-sm leading-6 text-orange-900">
                       Tus mejores oportunidades son los links con mayor volumen de
-                      clicks y comision generada. Tenes {money(retainedCommission)} en
-                      comisiones pendientes de validacion.
+                      clicks y comision generada. Priorizá los productos con mejor
+                      conversion para aumentar el saldo por liquidar.
                     </p>
                   </div>
                 </div>

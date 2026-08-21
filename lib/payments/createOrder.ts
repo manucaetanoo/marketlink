@@ -158,18 +158,6 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
       throw new Error("Producto inactivo");
     }
 
-    const selectedSize = item.selectedSize?.trim() || null;
-
-    if (product.sizes.length > 0) {
-      if (!selectedSize) {
-        throw new Error(`Selecciona un talle para ${product.name}`);
-      }
-
-      if (!product.sizes.includes(selectedSize)) {
-        throw new Error(`Talle invalido para ${product.name}`);
-      }
-    }
-
     const attribution = await resolveAttribution({
       product,
       clickId: item.clickId,
@@ -189,7 +177,7 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
     resolved.push({
       product,
       quantity,
-      selectedSize: product.sizes.length > 0 ? selectedSize : null,
+      selectedSize: null,
       selectedColor: null,
       ...attribution,
       total,

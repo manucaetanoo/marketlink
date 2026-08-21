@@ -4,25 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
 import { normalizeProductImageUrls } from "@/lib/product-images";
 
-const productCategories = [
-  "DIGITAL",
-] as const;
-
-const categoriesWithSizes = new Set<string>();
-
-function normalizeSizes(value: unknown) {
-  if (!Array.isArray(value)) return [];
-
-  return Array.from(
-    new Set(
-      value
-        .filter((size): size is string => typeof size === "string")
-        .map((size) => size.trim().toUpperCase())
-        .filter(Boolean)
-    )
-  ).slice(0, 20);
-}
-
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "ERROR";
 }
@@ -44,9 +25,6 @@ export async function PATCH(
       digitalAccessInstructions?: string | null;
       price?: number;
       isActive?: boolean;
-      category?: (typeof productCategories)[number];
-      sizes?: string[];
-      colors?: [];
       commissionValue?: number;
       commissionType?: "PERCENT";
       imageUrls?: string[];
@@ -84,28 +62,7 @@ export async function PATCH(
 
       data.price = price;
     }
-
-    if (body.category !== undefined) {
-      const category = String(body.category).trim().toUpperCase();
-
-      if (!productCategories.includes(category as (typeof productCategories)[number])) {
-        return NextResponse.json(
-          { ok: false, error: "Solo se pueden publicar productos digitales" },
-          { status: 400 }
-        );
-      }
-
-      data.category = category as (typeof productCategories)[number];
-      data.sizes = categoriesWithSizes.has(category)
-        ? normalizeSizes(body.sizes)
-        : [];
-    } else if (body.sizes !== undefined) {
-      data.sizes = [];
-    }
-
     if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
-
-    data.colors = [];
 
     if (body.commissionValue !== undefined) {
       const commissionValue = Number(body.commissionValue);
@@ -149,9 +106,6 @@ export async function PATCH(
         desc: true,
         digitalAccessInstructions: true,
         price: true,
-        category: true,
-        sizes: true,
-        colors: true,
         isActive: true,
         commissionValue: true,
         commissionType: true,

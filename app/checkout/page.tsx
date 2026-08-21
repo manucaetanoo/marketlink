@@ -69,7 +69,6 @@ export default async function DraftCheckoutPage({
       name: true,
       desc: true,
       price: true,
-      sizes: true,
       imageUrls: true,
     },
   });
@@ -78,14 +77,11 @@ export default async function DraftCheckoutPage({
     const product = productById.get(item.productId);
 
     if (!product) notFound();
-    if (product.sizes.length > 0 && !product.sizes.includes(item.selectedSize || "")) {
-      notFound();
-    }
 
     return {
-      id: `${item.productId}:${item.selectedSize || "no-size"}:digital`,
+      id: `${item.productId}:digital`,
       total: product.price * item.quantity,
-      selectedSize: item.selectedSize,
+      selectedSize: null,
       selectedColor: null,
       product: {
         name: product.name,

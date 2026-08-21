@@ -1,14 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney, getSellerNetAmount } from "@/lib/pricing";
-
-const productCategories = [
-  { value: "DIGITAL", label: "Digital", sizes: [] },
-] as const;
-
-const categoriesWithSizes = new Set<string>();
 
 const accessExamples = [
   {
@@ -29,24 +23,12 @@ const accessExamples = [
   },
 ];
 
-type ProductCategory =
-  | "CLOTHING"
-  | "SHOES"
-  | "ACCESSORIES"
-  | "BEAUTY"
-  | "HOME"
-  | "DIGITAL"
-  | "OTHER";
-
 type ProductFormProduct = {
   id: string;
   name: string;
   desc: string | null;
   digitalAccessInstructions: string | null;
   price: number;
-  category: ProductCategory;
-  sizes: string[];
-  colors: unknown;
   imageUrls: string[];
   isActive: boolean;
   commissionValue: number;
@@ -55,7 +37,11 @@ type ProductFormProduct = {
   platformCommissionType: "PERCENT" | "FIXED";
 };
 
-export default function ProductEditForm({ product }: { product: ProductFormProduct }) {
+export default function ProductEditForm({
+  product,
+}: {
+  product: ProductFormProduct;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -64,19 +50,11 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     desc: product.desc ?? "",
     digitalAccessInstructions: product.digitalAccessInstructions ?? "",
     price: String(product.price),
-    category: "DIGITAL" as ProductCategory,
-    sizes: [] as string[],
     imageUrls: product.imageUrls.slice(0, 1),
     isActive: product.isActive,
     commissionValue: String(product.commissionValue),
   });
-  const [customSize, setCustomSize] = useState("");
 
-  const selectedCategory = useMemo(
-    () => productCategories.find((item) => item.value === form.category),
-    [form.category]
-  );
-  const shouldShowSizes = categoriesWithSizes.has(form.category);
   const price = Number(form.price) || 0;
   const affiliateCommissionValue = Number(form.commissionValue) || 0;
   const sellerNet = getSellerNetAmount({
@@ -104,25 +82,11 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
     return String(data.url);
   }
 
-  function setField<Key extends keyof typeof form>(key: Key, value: (typeof form)[Key]) {
+  function setField<Key extends keyof typeof form>(
+    key: Key,
+    value: (typeof form)[Key]
+  ) {
     setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function toggleSize(size: string) {
-    setField(
-      "sizes",
-      form.sizes.includes(size)
-        ? form.sizes.filter((item) => item !== size)
-        : [...form.sizes, size]
-    );
-  }
-
-  function addCustomSize() {
-    const nextSize = customSize.trim().toUpperCase();
-    if (!nextSize) return;
-
-    setField("sizes", form.sizes.includes(nextSize) ? form.sizes : [...form.sizes, nextSize]);
-    setCustomSize("");
   }
 
   async function addImages(files: FileList | null) {
@@ -165,9 +129,6 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
       desc: form.desc,
       digitalAccessInstructions: form.digitalAccessInstructions,
       price: Number(form.price),
-      category: "DIGITAL",
-      sizes: [],
-      colors: [],
       imageUrls: form.imageUrls,
       isActive: form.isActive,
       commissionValue: Number(form.commissionValue),
@@ -226,7 +187,6 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
             required
           />
         </div>
-
       </div>
 
       <div>
@@ -252,8 +212,6 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
         />
         <p className="mt-2 text-xs leading-5 text-orange-900">
           Esta informacion se envia al comprador cuando el pago queda confirmado.
-          Si el acceso no es automatico, indica el plazo y que usaras el email de
-          la compra para crear o habilitar el usuario.
         </p>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -272,9 +230,9 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="text-sm font-medium text-slate-700">Categoria</label>
+          <label className="text-sm font-medium text-slate-700">Tipo</label>
           <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-900">
-            Digital
+            Producto digital
           </div>
         </div>
 
@@ -310,71 +268,26 @@ export default function ProductEditForm({ product }: { product: ProductFormProdu
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
               Afiliado
             </p>
-            <p className="mt-1 font-semibold">-{formatMoney(sellerNet.affiliateAmount)}</p>
+            <p className="mt-1 font-semibold">
+              -{formatMoney(sellerNet.affiliateAmount)}
+            </p>
           </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
               Plataforma
             </p>
-            <p className="mt-1 font-semibold">-{formatMoney(sellerNet.platformAmount)}</p>
+            <p className="mt-1 font-semibold">
+              -{formatMoney(sellerNet.platformAmount)}
+            </p>
           </div>
         </div>
       </div>
 
-      {shouldShowSizes && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">Talles</h2>
-              <p className="text-sm text-slate-500">Opciones visibles para compradores.</p>
-            </div>
-            <span className="text-xs font-medium text-slate-500">
-              {form.sizes.length} seleccionados
-            </span>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(selectedCategory?.sizes ?? []).map((size) => {
-              const active = form.sizes.includes(size);
-
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => toggleSize(size)}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-                    active
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-700"
-                  }`}
-                >
-                  {size}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex gap-2">
-            <input
-              value={customSize}
-              onChange={(e) => setCustomSize(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="Agregar talle"
-            />
-            <button
-              type="button"
-              onClick={addCustomSize}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Agregar
-            </button>
-          </div>
-        </div>
-      )}
-
       <div>
         <div className="flex items-center justify-between gap-3">
-          <label className="text-sm font-medium text-slate-700">Imagen principal</label>
+          <label className="text-sm font-medium text-slate-700">
+            Imagen principal
+          </label>
           <label className="inline-flex cursor-pointer items-center rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
             Elegir imagen
             <input

@@ -101,19 +101,6 @@ function statusLabel(status: string) {
   return labels[status] ?? status;
 }
 
-function fulfillmentLabel(status: string) {
-  const labels: Record<string, string> = {
-    CANCELED: "Cancelado",
-    DELIVERY_REQUESTED: "Acceso por revisar",
-    DELIVERED: "Acceso habilitado",
-    PENDING: "Pendiente",
-    PREPARING: "Preparando acceso",
-    SHIPPED: "Acceso enviado",
-  };
-
-  return labels[status] ?? status;
-}
-
 function StatCard({
   icon,
   label,
@@ -355,13 +342,6 @@ export default async function SellerDashboardPage() {
   const availableSettlement = settlements
     .filter((settlement) => settlement.status === "AVAILABLE")
     .reduce((total, settlement) => total + settlement.netAmount, 0);
-  const retainedSettlements = settlements.filter(
-    (settlement) => settlement.status === "PENDING"
-  );
-  const retainedAmount = retainedSettlements.reduce(
-    (total, settlement) => total + settlement.netAmount,
-    0
-  );
   const paidSettlement = settlements
     .filter((settlement) => settlement.status === "PAID")
     .reduce((total, settlement) => total + settlement.netAmount, 0);
@@ -450,7 +430,7 @@ export default async function SellerDashboardPage() {
               </div>
             </div>
 
-            <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 icon={<FiDollarSign />}
                 label="Ventas brutas"
@@ -470,13 +450,6 @@ export default async function SellerDashboardPage() {
                 label="Ventas digitales"
                 value={number(paidSellerOrders.length)}
                 detail={`${delta(currentSellerOrders.length, previousSellerOrders.length)} vs. periodo anterior`}
-                tone="slate"
-              />
-              <StatCard
-                icon={<FiClock />}
-                label="Retenido"
-                value={money(retainedAmount)}
-                detail={`${number(retainedSettlements.length)} ventas retenidas`}
                 tone="slate"
               />
               <StatCard

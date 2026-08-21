@@ -10,10 +10,10 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-13 text-center">
         <h1 className="text-2xl font-bold text-gray-800 mb-2">¡Gracias por tu compra!</h1>
         <p className="text-gray-600 mb-6">
-          Tu pedido <span className="font-semibold text-orange-600">#{orderId}</span> fue procesado con éxito.
+          Tu compra <span className="font-semibold text-orange-600">#{orderId}</span> fue procesada con éxito.
         </p>
-        <p className="text-sm text-gray-400">
-          Te estará llegando la informacion del pedido a tu mail. <br /> Se recomienda guardar el numero de pedido
+        <p className="text-sm text-gray-500">
+          Te estará llegando la informacion de tu compra a tu mail. <br />
         </p>
         <Link
           href="/products"
@@ -21,6 +21,8 @@ export default async function SuccessPage({ params }: { params: Promise<{ id: st
         >
           Volver a la tienda
         </Link>
+        
+        <p className="mt-5 text-sm text-gray-400">Recomendamos guardar el numero de compra</p>
       </div>
     </div>
   );

@@ -26,16 +26,6 @@ import {
 } from "@/lib/product-images";
 import { unstable_cache } from "next/cache";
 
-const categoryLabels: Record<string, string> = {
-  ACCESSORIES: "Accesorios",
-  BEAUTY: "Belleza",
-  CLOTHING: "Ropa",
-  DIGITAL: "Digital",
-  HOME: "Hogar",
-  OTHER: "Otro",
-  SHOES: "Calzado",
-};
-
 function money(value: number) {
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
@@ -88,7 +78,6 @@ export default async function ProductPage({
 
   if (!product) notFound();
 
-  const categoryName = categoryLabels[product.category] ?? "Producto";
   const sellerNet = getSellerNetAmount({
     price: product.price,
     affiliateCommissionValue: product.commissionValue,
@@ -118,7 +107,7 @@ export default async function ProductPage({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-orange-700 ring-1 ring-orange-200">
                   <FiTag />
-                  {categoryName}
+                  Producto digital
                 </span>
                 {product.isActive && (
                   <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -299,7 +288,6 @@ export default async function ProductPage({
                     name: product.name,
                     price: product.price,
                     imageUrl: productImage,
-                    sizes: product.sizes,
                   }}
                 />
 

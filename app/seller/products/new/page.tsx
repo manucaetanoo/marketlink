@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { isShopifyVisibleForEmail } from "@/lib/features";
 import NewProductPageClient from "./NewProductPageClient";
 
 export default async function NewProductPage() {
@@ -11,9 +10,5 @@ export default async function NewProductPage() {
     redirect("/login");
   }
 
-  return (
-    <NewProductPageClient
-      shopifyImportEnabled={isShopifyVisibleForEmail(session.user.email)}
-    />
-  );
+  return <NewProductPageClient />;
 }

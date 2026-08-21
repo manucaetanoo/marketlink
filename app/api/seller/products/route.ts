@@ -4,11 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
 import { normalizeProductImageUrls } from "@/lib/product-images";
 
-const productCategories = [
-  "DIGITAL",
-] as const;
-
-const categoriesWithSizes = new Set<string>();
 const SELLER_PRODUCTS_LIMIT = 100;
 const MAX_SELLER_PRODUCTS_TAKE = 100;
 
@@ -17,19 +12,6 @@ function getPaginationValue(value: string | null, fallback: number, max: number)
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0) return fallback;
   return Math.min(parsed, max);
-}
-
-function normalizeSizes(value: unknown) {
-  if (!Array.isArray(value)) return [];
-
-  return Array.from(
-    new Set(
-      value
-        .filter((size): size is string => typeof size === "string")
-        .map((size) => size.trim().toUpperCase())
-        .filter(Boolean)
-    )
-  ).slice(0, 20);
 }
 
 function getErrorMessage(error: unknown) {
@@ -61,9 +43,6 @@ export async function GET(req: Request) {
           desc: true,
           digitalAccessInstructions: true,
           price: true,
-          category: true,
-          sizes: true,
-          colors: true,
           createdAt: true,
           isActive: true,
           commissionValue: true,
@@ -117,8 +96,6 @@ export async function POST(req: Request) {
     ).trim();
     const price = Number(body.price);
     const commissionValue = Number(body.commissionValue);
-    const category = "DIGITAL";
-    const sizes = normalizeSizes(body.sizes);
 
     const imageUrls = normalizeProductImageUrls(body.imageUrls).slice(0, 1);
 
@@ -139,13 +116,6 @@ export async function POST(req: Request) {
     if (!Number.isFinite(commissionValue) || commissionValue <= 0 || commissionValue > 100) {
       return NextResponse.json(
         { ok: false, error: "Comision invalida" },
-        { status: 400 }
-      );
-    }
-
-    if (!productCategories.includes(category as (typeof productCategories)[number])) {
-      return NextResponse.json(
-        { ok: false, error: "Solo se pueden publicar productos digitales" },
         { status: 400 }
       );
     }
@@ -174,9 +144,6 @@ export async function POST(req: Request) {
           ? digitalAccessInstructions
           : null,
         price,
-        category: category as (typeof productCategories)[number],
-        sizes: categoriesWithSizes.has(category) ? sizes : [],
-        colors: [],
         commissionValue,
         commissionType: "PERCENT",
         platformCommissionValue: sellerSettings.platformCommissionValue,
@@ -185,9 +152,6 @@ export async function POST(req: Request) {
       },
       select: {
         id: true,
-        category: true,
-        sizes: true,
-        colors: true,
         commissionValue: true,
         commissionType: true,
       },
