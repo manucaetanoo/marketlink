@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
 import { normalizeProductImageUrls } from "@/lib/product-images";
+import { normalizeProductDigitalAccessType } from "@/lib/product-access";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "ERROR";
@@ -23,6 +24,7 @@ export async function PATCH(
       name?: string;
       desc?: string | null;
       digitalAccessInstructions?: string | null;
+      digitalAccessType?: ReturnType<typeof normalizeProductDigitalAccessType>;
       price?: number;
       isActive?: boolean;
       commissionValue?: number;
@@ -48,6 +50,12 @@ export async function PATCH(
     if (body.digitalAccessInstructions !== undefined) {
       data.digitalAccessInstructions =
         String(body.digitalAccessInstructions).trim() || null;
+    }
+
+    if (body.digitalAccessType !== undefined) {
+      data.digitalAccessType = normalizeProductDigitalAccessType(
+        body.digitalAccessType
+      );
     }
 
     if (body.price !== undefined) {
@@ -105,6 +113,7 @@ export async function PATCH(
         name: true,
         desc: true,
         digitalAccessInstructions: true,
+        digitalAccessType: true,
         price: true,
         isActive: true,
         commissionValue: true,

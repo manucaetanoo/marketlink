@@ -118,9 +118,10 @@ model Product {
   sellerId String
   seller   User   @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: Cascade)
 
-  name                      String   @db.VarChar(140)
-  desc                      String?  @db.Text
-  digitalAccessInstructions String?  @db.Text
+  name                      String                   @db.VarChar(140)
+  desc                      String?                  @db.Text
+  digitalAccessInstructions String?                  @db.Text
+  digitalAccessType         ProductDigitalAccessType @default(IMMEDIATE)
   price                     Int
   imageUrls                 String[]
 
@@ -518,6 +519,11 @@ enum OrderStatus {
 enum CommissionType {
   PERCENT
   FIXED
+}
+
+enum ProductDigitalAccessType {
+  IMMEDIATE
+  EMAIL_WITHIN_24_BUSINESS_HOURS
 }
 
 enum SettlementStatus {

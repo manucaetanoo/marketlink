@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney, getSellerNetAmount } from "@/lib/pricing";
+import {
+  ProductDigitalAccessType,
+  normalizeProductDigitalAccessType,
+} from "@/lib/product-access";
 
 const accessExamples = [
   {
@@ -28,6 +32,7 @@ type ProductFormProduct = {
   name: string;
   desc: string | null;
   digitalAccessInstructions: string | null;
+  digitalAccessType: ProductDigitalAccessType | null;
   price: number;
   imageUrls: string[];
   isActive: boolean;
@@ -49,6 +54,9 @@ export default function ProductEditForm({
     name: product.name,
     desc: product.desc ?? "",
     digitalAccessInstructions: product.digitalAccessInstructions ?? "",
+    digitalAccessType: normalizeProductDigitalAccessType(
+      product.digitalAccessType
+    ),
     price: String(product.price),
     imageUrls: product.imageUrls.slice(0, 1),
     isActive: product.isActive,
@@ -128,6 +136,7 @@ export default function ProductEditForm({
       name: form.name,
       desc: form.desc,
       digitalAccessInstructions: form.digitalAccessInstructions,
+      digitalAccessType: form.digitalAccessType,
       price: Number(form.price),
       imageUrls: form.imageUrls,
       isActive: form.isActive,
@@ -200,19 +209,66 @@ export default function ProductEditForm({
       </div>
 
       <div className="rounded-lg border border-orange-100 bg-orange-50/70 p-4">
-        <label className="text-sm font-semibold text-slate-900">
-          Instrucciones de acceso para el comprador
-        </label>
-        <textarea
-          value={form.digitalAccessInstructions}
-          onChange={(e) => setField("digitalAccessInstructions", e.target.value)}
-          rows={7}
-          className="mt-2 w-full rounded-lg border border-orange-100 bg-white px-3 py-2 text-sm leading-6"
-          placeholder="Explica exactamente que pasa despues del pago: link, usuario, clave, tiempo de alta manual o contacto de soporte."
-        />
-        <p className="mt-2 text-xs leading-5 text-orange-900">
-          Esta informacion se envia al comprador cuando el pago queda confirmado.
-        </p>
+        <fieldset>
+          <legend className="text-sm font-semibold text-slate-900">
+            Tipo de acceso
+          </legend>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-orange-100 bg-white p-3 text-sm text-slate-700 transition hover:border-orange-200">
+              <input
+                type="radio"
+                name="digitalAccessType"
+                value={ProductDigitalAccessType.IMMEDIATE}
+                checked={
+                  form.digitalAccessType === ProductDigitalAccessType.IMMEDIATE
+                }
+                onChange={(e) =>
+                  setField(
+                    "digitalAccessType",
+                    normalizeProductDigitalAccessType(e.target.value)
+                  )
+                }
+                required
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-semibold text-slate-900">
+                  Acceso inmediato
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  El comprador recibe el acceso al confirmarse el pago.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-orange-100 bg-white p-3 text-sm text-slate-700 transition hover:border-orange-200">
+              <input
+                type="radio"
+                name="digitalAccessType"
+                value={ProductDigitalAccessType.EMAIL_WITHIN_24_BUSINESS_HOURS}
+                checked={
+                  form.digitalAccessType ===
+                  ProductDigitalAccessType.EMAIL_WITHIN_24_BUSINESS_HOURS
+                }
+                onChange={(e) =>
+                  setField(
+                    "digitalAccessType",
+                    normalizeProductDigitalAccessType(e.target.value)
+                  )
+                }
+                required
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-semibold text-slate-900">
+                  Acceso enviado por correo dentro de las 24 horas hábiles
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  El vendedor envía las instrucciones por email luego del pago.
+                </span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {accessExamples.map((example) => (
@@ -226,6 +282,20 @@ export default function ProductEditForm({
             </button>
           ))}
         </div>
+
+        <label className="mt-5 block text-sm font-semibold text-slate-900">
+          Instrucciones de acceso para el comprador
+        </label>
+        <textarea
+          value={form.digitalAccessInstructions}
+          onChange={(e) => setField("digitalAccessInstructions", e.target.value)}
+          rows={7}
+          className="mt-2 w-full rounded-lg border border-orange-100 bg-white px-3 py-2 text-sm leading-6"
+          placeholder="Explica exactamente que pasa despues del pago: link, usuario, clave, tiempo de alta manual o contacto de soporte."
+        />
+        <p className="mt-2 text-xs leading-5 text-orange-900">
+          Esta informacion se envia al comprador cuando el pago queda confirmado.
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

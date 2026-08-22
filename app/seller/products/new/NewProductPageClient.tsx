@@ -18,23 +18,24 @@ import {
 } from "@/lib/platform-commission";
 import { formatMoney, getSellerNetAmount } from "@/lib/pricing";
 import Sidebar from "@/components/Sidebar";
+import { ProductDigitalAccessType } from "@/lib/product-access";
 
 const accessExamples = [
   {
     title: "Link directo",
-    text: "Link del curso, archivo o area privada + contraseña/codigo si aplica.",
+    text: "Acceso inmediato: entra a https://...\nUsa este codigo o contraseña: ...\nSoporte: soporte@...",
   },
   {
     title: "Moodle con clave",
-    text: "URL de Moodle + pasos para crear cuenta + clave de matriculacion.",
+    text: "Curso en Moodle: https://...\nCrea tu cuenta con el mismo email usado en la compra.\nClave de matriculacion: ...\nSoporte: soporte@...",
   },
   {
     title: "Alta manual",
-    text: "Avisa que crearas el usuario con el email de compra e indica el plazo.",
+    text: "Vamos a crear tu usuario con el email usado en la compra.\nRecibiras los datos de acceso dentro de 24 horas habiles.\nSoporte: soporte@...",
   },
   {
     title: "Licencia o archivo",
-    text: "Codigo de activacion, link de descarga y contacto de soporte.",
+    text: "Tu licencia/codigo de activacion es: ...\nDescarga o activa el producto desde: https://...\nSoporte: soporte@...",
   },
 ];
 
@@ -86,6 +87,8 @@ function NewProductPageContent() {
     "PERCENT" | "FIXED"
   >(DEFAULT_PLATFORM_COMMISSION_TYPE);
   const [priceValue, setPriceValue] = useState("");
+  const [digitalAccessInstructions, setDigitalAccessInstructions] =
+    useState("");
 
   const imagePreviews = useMemo(() => {
     return imageFiles.map((file) => ({
@@ -135,6 +138,10 @@ function NewProductPageContent() {
     );
   }
 
+  function applyAccessExample(text: string) {
+    setDigitalAccessInstructions(text);
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -148,6 +155,9 @@ function NewProductPageContent() {
       const digitalAccessInstructions = String(
         fd.get("digitalAccessInstructions") || ""
       ).trim();
+      const digitalAccessType = String(
+        fd.get("digitalAccessType") || ProductDigitalAccessType.IMMEDIATE
+      );
       const price = Number(fd.get("price") || 0);
 
       if (!name) throw new Error("Debes ingresar el nombre del producto");
@@ -163,6 +173,7 @@ function NewProductPageContent() {
           name,
           desc,
           digitalAccessInstructions,
+          digitalAccessType,
           price,
           commissionValue,
           commissionType: "PERCENT",
@@ -281,9 +292,68 @@ function NewProductPageContent() {
                           </div>
 
                           <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
+                            <fieldset className="mb-5">
+                              <legend className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <DocumentTextIcon className="h-4 w-4 text-orange-500" />
+                                Tipo de acceso
+                              </legend>
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-orange-100 bg-white px-3 py-3 text-sm transition hover:border-orange-200">
+                                  <input
+                                    type="radio"
+                                    name="digitalAccessType"
+                                    value={ProductDigitalAccessType.IMMEDIATE}
+                                    defaultChecked
+                                    required
+                                    className="mt-1"
+                                  />
+                                  <span>
+                                    <span className="block font-semibold text-slate-900">
+                                      Acceso inmediato
+                                    </span>
+                                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                      El comprador recibe el acceso al confirmarse el pago.
+                                    </span>
+                                  </span>
+                                </label>
+                                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-orange-100 bg-white px-3 py-3 text-sm transition hover:border-orange-200">
+                                  <input
+                                    type="radio"
+                                    name="digitalAccessType"
+                                    value={
+                                      ProductDigitalAccessType.EMAIL_WITHIN_24_BUSINESS_HOURS
+                                    }
+                                    required
+                                    className="mt-1"
+                                  />
+                                  <span>
+                                    <span className="block font-semibold text-slate-900">
+                                      Acceso enviado por correo dentro de las 24 horas hábiles
+                                    </span>
+                                    <span className="mt-1 block text-xs leading-5 text-slate-500">
+                                      El vendedor envía las instrucciones por email luego del pago.
+                                    </span>
+                                  </span>
+                                </label>
+                              </div>
+                            </fieldset>
+
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                              {accessExamples.map((example) => (
+                                <button
+                                  key={example.title}
+                                  type="button"
+                                  onClick={() => applyAccessExample(example.text)}
+                                  className="rounded-xl border border-orange-100 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:border-orange-200 hover:bg-orange-50"
+                                >
+                                  {example.title}
+                                </button>
+                              ))}
+                            </div>
+
                             <label
                               htmlFor="digitalAccessInstructions"
-                              className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900"
+                              className="mb-2 mt-5 flex items-center gap-2 text-sm font-semibold text-slate-900"
                             >
                               <DocumentTextIcon className="h-4 w-4 text-orange-500" />
                               Instrucciones de acceso para el comprador
@@ -292,6 +362,10 @@ function NewProductPageContent() {
                             <textarea
                               id="digitalAccessInstructions"
                               name="digitalAccessInstructions"
+                              value={digitalAccessInstructions}
+                              onChange={(e) =>
+                                setDigitalAccessInstructions(e.target.value)
+                              }
                               rows={7}
                               placeholder="Explica exactamente que pasa despues del pago: link, usuario, clave, tiempo de alta manual o contacto de soporte."
                               className="block w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
@@ -299,21 +373,6 @@ function NewProductPageContent() {
                             <p className="mt-2 text-sm leading-6 text-orange-900">
                               Esta informacion es privada y se envia al comprador cuando el pago queda confirmado.
                             </p>
-                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                              {accessExamples.map((example) => (
-                                <div
-                                  key={example.title}
-                                  className="rounded-xl border border-orange-100 bg-white px-3 py-2"
-                                >
-                                  <p className="text-xs font-semibold text-slate-900">
-                                    {example.title}
-                                  </p>
-                                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                                    {example.text}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
                           </div>
                         </div>
                       </section>

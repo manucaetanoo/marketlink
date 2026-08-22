@@ -134,7 +134,7 @@ export default function ProductCard({
                 </div>
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-right">
                   <p className="text-xs font-bold text-emerald-700">
-                    Ganás
+                    Ganancia por venta
                   </p>
                   <p className="mt-1 text-xl font-black tracking-tight text-emerald-600">
                     {formatPrice(commissionEarning)}

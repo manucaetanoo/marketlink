@@ -69,3 +69,10 @@ export const CommissionType = {
 } as const;
 export type CommissionType =
   (typeof CommissionType)[keyof typeof CommissionType];
+
+export const ProductDigitalAccessType = {
+  IMMEDIATE: "IMMEDIATE",
+  EMAIL_WITHIN_24_BUSINESS_HOURS: "EMAIL_WITHIN_24_BUSINESS_HOURS",
+} as const;
+export type ProductDigitalAccessType =
+  (typeof ProductDigitalAccessType)[keyof typeof ProductDigitalAccessType];

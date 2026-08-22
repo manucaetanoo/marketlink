@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole, requireUser } from "@/lib/auth";
 import { normalizeProductImageUrls } from "@/lib/product-images";
+import { normalizeProductDigitalAccessType } from "@/lib/product-access";
 
 const SELLER_PRODUCTS_LIMIT = 100;
 const MAX_SELLER_PRODUCTS_TAKE = 100;
@@ -42,6 +43,7 @@ export async function GET(req: Request) {
           name: true,
           desc: true,
           digitalAccessInstructions: true,
+          digitalAccessType: true,
           price: true,
           createdAt: true,
           isActive: true,
@@ -94,6 +96,9 @@ export async function POST(req: Request) {
     const digitalAccessInstructions = String(
       body.digitalAccessInstructions ?? ""
     ).trim();
+    const digitalAccessType = normalizeProductDigitalAccessType(
+      body.digitalAccessType
+    );
     const price = Number(body.price);
     const commissionValue = Number(body.commissionValue);
 
@@ -143,6 +148,7 @@ export async function POST(req: Request) {
         digitalAccessInstructions: digitalAccessInstructions.length
           ? digitalAccessInstructions
           : null,
+        digitalAccessType,
         price,
         commissionValue,
         commissionType: "PERCENT",

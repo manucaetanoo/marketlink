@@ -6,6 +6,7 @@ import {
 import { type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendTransactionalEmail } from "@/lib/email";
+import { getProductDigitalAccessMessage } from "@/lib/product-access";
 
 type MarkOrderPaidInput = {
   orderId: string;
@@ -42,7 +43,11 @@ function escapeHtml(value: string) {
 }
 
 function accessInstructionsHtml(
-  instructions: Array<{ productName: string; instructions: string }>
+  instructions: Array<{
+    productName: string;
+    message: string;
+    instructions: string;
+  }>
 ) {
   if (instructions.length === 0) return "";
 
@@ -57,6 +62,9 @@ function accessInstructionsHtml(
                   <div style="margin-top:14px;padding-top:14px;border-top:1px solid #fed7aa;">
                     <p style="margin:0 0 8px;font-size:15px;font-weight:800;color:#111827;">
                       ${escapeHtml(item.productName)}
+                    </p>
+                    <p style="margin:0 0 8px;font-size:14px;line-height:1.7;font-weight:700;color:#431407;">
+                      ${escapeHtml(item.message)}.
                     </p>
                     <p style="margin:0;white-space:pre-line;font-size:14px;line-height:1.7;color:#431407;">
                       ${escapeHtml(item.instructions)}
@@ -87,6 +95,7 @@ export async function markOrderPaidAndNotify({
                 id: true,
                 name: true,
                 digitalAccessInstructions: true,
+                digitalAccessType: true,
               },
             },
             seller: {
@@ -257,9 +266,11 @@ export async function markOrderPaidAndNotify({
         accessInstructions: items
           .map((item) => ({
             productName: item.product.name,
+            message: getProductDigitalAccessMessage(
+              item.product.digitalAccessType
+            ),
             instructions: item.product.digitalAccessInstructions?.trim() ?? "",
           }))
-          .filter((item) => item.instructions.length > 0),
       },
     };
   });
@@ -274,7 +285,9 @@ export async function markOrderPaidAndNotify({
   const productList = result.order.productNames.join(", ");
   const accessHtml = accessInstructionsHtml(result.order.accessInstructions);
   const accessText = result.order.accessInstructions
-    .map((item) => `${item.productName}: ${item.instructions}`)
+    .map((item) =>
+      `${item.productName}: ${item.message}.${item.instructions ? `\n${item.instructions}` : ""}`
+    )
     .join("\n\n");
 
   if (result.order.buyerEmail) {

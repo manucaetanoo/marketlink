@@ -24,6 +24,10 @@ import {
   getFirstRenderableProductImage,
   getRenderableProductImageUrls,
 } from "@/lib/product-images";
+import {
+  ProductDigitalAccessType,
+  normalizeProductDigitalAccessType,
+} from "@/lib/product-access";
 import { unstable_cache } from "next/cache";
 
 function money(value: number) {
@@ -87,6 +91,11 @@ export default async function ProductPage({
   });
   const productImage = getFirstRenderableProductImage(product.imageUrls);
   const sellerName = product.seller.name ?? product.seller.storeSlug ?? "Afilink seller";
+  const accessDeliveryLabel =
+    normalizeProductDigitalAccessType(product.digitalAccessType) ===
+    ProductDigitalAccessType.EMAIL_WITHIN_24_BUSINESS_HOURS
+      ? "Acceso por correo dentro de las 24 horas hábiles"
+      : "Acceso inmediato";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
@@ -260,7 +269,7 @@ export default async function ProductPage({
                     Tipo de entrega
                   </span>
                   <span className="text-sm font-semibold text-slate-950">
-                    Digital
+                    {accessDeliveryLabel}
                   </span>
                 </div>
               </div>
