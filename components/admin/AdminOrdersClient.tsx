@@ -132,7 +132,7 @@ export default function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) 
 
   async function cancelOrder(order: AdminOrder) {
     const reason = window.prompt(
-      "Motivo del reembolso/cancelacion. Esto no ejecuta el reembolso en dLocal, solo actualiza Afilink."
+      "Motivo del reembolso/cancelacion. Esto no ejecuta el reembolso en Mercado Pago, solo actualiza Afilink."
     );
 
     if (reason === null) return;

@@ -50,9 +50,9 @@ export function getMissingPayoutFields(user: PayoutUser) {
     }
   }
 
-  if (method === PayoutMethod.DLOCAL_GO) {
+  if (method === PayoutMethod.DLOCAL_GO || method === PayoutMethod.MANUAL) {
     if (!filled(user.payoutEmail) && !filled(user.payoutPhone)) {
-      missing.push("email o telefono de dLocal Go");
+      missing.push("email o telefono de cobro");
     }
   }
 

@@ -4,7 +4,6 @@ import {
   AlertCircle,
   CheckCircle2,
   CreditCard,
-  LockKeyhole,
   PackageCheck,
   ShieldCheck,
   UserRound,
@@ -50,7 +49,7 @@ type OrderCheckoutData = {
 
 type Props = {
   order: OrderCheckoutData;
-  smartFieldsApiKey: string;
+  publicKey: string;
   sdkUrl: string;
   draftItems?: Array<{
     productId: string;
@@ -62,37 +61,23 @@ type Props = {
   }>;
 };
 
-type DlocalField = {
-  mount: (element: HTMLElement | null) => void;
-  unmount?: () => void;
-  destroy?: () => void;
+type MercadoPagoBrickController = {
+  unmount: () => void;
 };
 
-type DlocalInstallment = {
-  id: string;
-  currency: string;
-  installments: number;
-  installment_amount: number;
-  total_amount: number;
-};
-
-type DlocalGoSdk = {
-  initialize: (apiKey: string, checkoutToken: string) => Promise<void> | void;
-  fields: () => {
-    create: (type: "card", options: Record<string, unknown>) => DlocalField;
+type MercadoPagoSdk = {
+  bricks: () => {
+    create: (
+      type: "payment",
+      containerId: string,
+      settings: Record<string, unknown>
+    ) => Promise<MercadoPagoBrickController>;
   };
-  createCardToken: (
-    field: DlocalField,
-    options: { name: string }
-  ) => Promise<{ token: string }>;
-  onInstallmentsChange?: (
-    callback: (installments: DlocalInstallment[]) => void
-  ) => void;
 };
 
 declare global {
   interface Window {
-    dlocalGo?: DlocalGoSdk;
+    MercadoPago?: new (publicKey: string, options?: Record<string, unknown>) => MercadoPagoSdk;
   }
 }
 
@@ -103,125 +88,180 @@ const requiredShippingFields: Array<keyof ShippingData> = [
 ];
 
 const ALLOWED_SHIPPING_COUNTRY = "UY";
+const paymentBrickContainerId = "paymentBrick_container";
 
 const inputClassName =
   "mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-orange-400 focus:ring-4 focus:ring-orange-100";
 
-function splitFullName(fullName: string) {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  return {
-    firstName: parts[0] ?? "",
-    lastName: parts.slice(1).join(" "),
-  };
-}
-
 function getStatusMessage(status: string | null) {
   switch (status) {
-    case "PAID":
+    case "approved":
       return "Pago aprobado. Ya registramos tu compra.";
-    case "PENDING":
     case "pending":
+    case "in_process":
       return "Tu pago esta pendiente de confirmacion.";
-    case "REJECTED":
-      return "dLocal Go rechazo el pago. Proba con otro medio.";
-    case "CANCELLED":
-    case "EXPIRED":
-      return "El pago fue cancelado o expiro.";
+    case "rejected":
+      return "Mercado Pago rechazo el pago. Proba con otro medio.";
+    case "cancelled":
+    case "refunded":
+    case "charged_back":
+      return "El pago fue cancelado o devuelto.";
     default:
       return null;
   }
 }
 
-export default function DlocalGoCheckoutClient({
+export default function MercadoPagoCheckoutClient({
   order,
-  smartFieldsApiKey,
+  publicKey,
   sdkUrl,
   draftItems,
 }: Props) {
-  const cardContainerRef = useRef<HTMLDivElement>(null);
-  const cardFieldRef = useRef<DlocalField | null>(null);
-  const initializedTokenRef = useRef<string | null>(null);
+  const brickControllerRef = useRef<MercadoPagoBrickController | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [cardReady, setCardReady] = useState(false);
+  const [brickReady, setBrickReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessConfirmed, setAccessConfirmed] = useState(false);
-  const [checkoutToken, setCheckoutToken] = useState<string | null>(null);
+  const [preferenceId, setPreferenceId] = useState<string | null>(null);
   const [paymentOrderId, setPaymentOrderId] = useState(order.id);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(
     order.paymentStatus
   );
-  const [installments, setInstallments] = useState<DlocalInstallment[]>([]);
-  const [installmentsId, setInstallmentsId] = useState("");
   const [shipping, setShipping] = useState<ShippingData>(order.shipping);
-  const [documentType, setDocumentType] = useState("CI");
-  const [documentNumber, setDocumentNumber] = useState("");
 
-  const resetCardSession = (accessConfirmedValue = false) => {
-    cardFieldRef.current?.unmount?.();
-    cardFieldRef.current?.destroy?.();
-    cardContainerRef.current?.replaceChildren();
-    cardFieldRef.current = null;
-    initializedTokenRef.current = null;
-    setCheckoutToken(null);
-    setCardReady(false);
-    setInstallments([]);
-    setInstallmentsId("");
+  const resetBrickSession = (accessConfirmedValue = false) => {
+    brickControllerRef.current?.unmount();
+    brickControllerRef.current = null;
+    setPreferenceId(null);
+    setBrickReady(false);
     setAccessConfirmed(accessConfirmedValue);
   };
 
   useEffect(() => {
-    if (!sdkReady || !checkoutToken || initializedTokenRef.current === checkoutToken) {
-      return;
-    }
+    if (!sdkReady || !preferenceId || !window.MercadoPago) return;
 
-    const mountCard = async () => {
-      if (!window.dlocalGo) {
-        setError("No se pudo cargar dLocal Go SmartFields");
-        return;
-      }
+    let alive = true;
 
+    const mountBrick = async () => {
       try {
-        await window.dlocalGo.initialize(smartFieldsApiKey, checkoutToken);
-        const fields = window.dlocalGo.fields();
-        const cardField = fields.create("card", {
-          style: {
-            base: {
-              color: "#0f172a",
-              fontFamily: "Inter, system-ui, sans-serif",
-              fontSize: "15px",
-              lineHeight: "22px",
-              "::placeholder": {
-                color: "#94a3b8",
+        const MercadoPago = window.MercadoPago;
+
+        if (!MercadoPago) {
+          setError("No se pudo cargar Mercado Pago");
+          return;
+        }
+
+        brickControllerRef.current?.unmount();
+
+        const mp = new MercadoPago(publicKey, { locale: "es-UY" });
+        const bricksBuilder = mp.bricks();
+        const controller = await bricksBuilder.create(
+          "payment",
+          paymentBrickContainerId,
+          {
+            initialization: {
+              amount: Number(order.total),
+              preferenceId,
+              payer: {
+                email: shipping.buyerEmail,
               },
             },
-          },
-        });
+            customization: {
+              paymentMethods: {
+                creditCard: "all",
+                debitCard: "all",
+                prepaidCard: "all",
+                ticket: "all",
+                mercadoPago: "all",
+              },
+            },
+            callbacks: {
+              onReady: () => {
+                if (alive) {
+                  setBrickReady(true);
+                  setError(null);
+                }
+              },
+              onSubmit: ({ formData }: { formData: Record<string, unknown> }) =>
+                new Promise<void>((resolve, reject) => {
+                  fetch("/api/payments/mercadopago/confirm", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      orderId: paymentOrderId,
+                      formData,
+                    }),
+                  })
+                    .then((response) =>
+                      response.json().then((data) => ({ response, data }))
+                    )
+                    .then(({ response, data }) => {
+                      if (!response.ok || !data.ok) {
+                        throw new Error(
+                          data.error ?? "No se pudo confirmar el pago"
+                        );
+                      }
 
-        cardContainerRef.current?.replaceChildren();
-        cardField.mount(cardContainerRef.current);
-        cardFieldRef.current = cardField;
-        initializedTokenRef.current = checkoutToken;
-        setCardReady(true);
-        setError(null);
+                      const status = String(data.payment?.status ?? "pending");
+                      setPaymentStatus(status);
 
-        window.dlocalGo.onInstallmentsChange?.((options) => {
-          setInstallments(options ?? []);
-          setInstallmentsId("");
-        });
+                      if (data.checkout?.redirectUrl) {
+                        window.location.href = String(data.checkout.redirectUrl);
+                      }
+
+                      resolve();
+                    })
+                    .catch((err) => {
+                      const message =
+                        err instanceof Error
+                          ? err.message
+                          : "No se pudo procesar el pago";
+                      setError(message);
+                      reject(err);
+                    });
+                }),
+              onError: (err: unknown) => {
+                setError(
+                  err instanceof Error
+                    ? err.message
+                    : "No se pudo cargar Mercado Pago"
+                );
+              },
+            },
+          }
+        );
+
+        if (!alive) {
+          controller.unmount();
+          return;
+        }
+
+        brickControllerRef.current = controller;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo iniciar la tarjeta");
+        setError(
+          err instanceof Error ? err.message : "No se pudo iniciar Mercado Pago"
+        );
       }
     };
 
-    void mountCard();
-  }, [checkoutToken, sdkReady, smartFieldsApiKey]);
+    void mountBrick();
+
+    return () => {
+      alive = false;
+      brickControllerRef.current?.unmount();
+      brickControllerRef.current = null;
+    };
+  }, [preferenceId, publicKey, sdkReady, order.total, paymentOrderId, shipping.buyerEmail]);
 
   const statusMessage = getStatusMessage(paymentStatus);
 
   const setShippingField = (field: keyof ShippingData, value: string) => {
     setShipping((current) => ({ ...current, [field]: value }));
-    resetCardSession(false);
+    resetBrickSession(false);
   };
 
   const validateShipping = () => {
@@ -237,16 +277,7 @@ export default function DlocalGoCheckoutClient({
     return null;
   };
 
-  const validatePaymentData = () => {
-    const shippingError = validateShipping();
-
-    if (shippingError) return shippingError;
-    if (!documentNumber.trim()) return "Ingresa el documento del titular.";
-
-    return null;
-  };
-
-  const createTransparentPayment = async () => {
+  const createPaymentSession = async () => {
     const shippingError = validateShipping();
 
     if (shippingError) {
@@ -256,17 +287,17 @@ export default function DlocalGoCheckoutClient({
 
     setLoading(true);
     setError(null);
-    resetCardSession(false);
+    resetBrickSession(false);
 
     try {
-      const response = await fetch("/api/payments/dlocalgo/process", {
+      const response = await fetch("/api/payments/mercadopago/process", {
         method: "POST",
         credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          orderId: draftItems ? undefined : paymentOrderId,
+          orderId: paymentOrderId === "pendiente" ? undefined : paymentOrderId,
           items: draftItems,
           shippingData: {
             ...shipping,
@@ -284,105 +315,22 @@ export default function DlocalGoCheckoutClient({
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.error ?? "No se pudo iniciar el pago con dLocal Go");
+        throw new Error(data.error ?? "No se pudo iniciar el pago con Mercado Pago");
       }
 
-      const token = data.payment?.merchantCheckoutToken;
+      const resolvedOrderId = String(data.orderIds?.[0] ?? paymentOrderId);
+      const resolvedPreferenceId = data.checkout?.preferenceId;
 
-      if (!token) {
-        throw new Error("dLocal Go no devolvio el token para SmartFields");
+      if (!resolvedPreferenceId) {
+        throw new Error("Mercado Pago no devolvio la preferencia para Bricks");
       }
 
-      setPaymentStatus(String(data.payment?.status ?? "PENDING"));
-      setCheckoutToken(String(token));
+      setPaymentOrderId(resolvedOrderId);
+      setPaymentStatus(String(data.payment?.status ?? "pending"));
+      setPreferenceId(String(resolvedPreferenceId));
       setAccessConfirmed(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el pago");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const submitPayment = async () => {
-    const shippingError = validatePaymentData();
-    const cardField = cardFieldRef.current;
-
-    if (shippingError) {
-      setError(shippingError);
-      return;
-    }
-
-    if (!checkoutToken || !cardField || !window.dlocalGo) {
-      setError("El formulario de tarjeta todavia no esta listo.");
-      return;
-    }
-
-    const { firstName, lastName } = splitFullName(shipping.buyerName);
-    setLoading(true);
-    setError(null);
-
-    try {
-      const cardTokenResponse = await window.dlocalGo.createCardToken(cardField, {
-        name: shipping.buyerName,
-      });
-
-      const response = await fetch("/api/payments/dlocalgo/confirm", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: draftItems ? undefined : paymentOrderId,
-          items: draftItems,
-          checkoutToken,
-          cardToken: cardTokenResponse.token,
-          clientFirstName: firstName,
-          clientLastName: lastName,
-          clientDocumentType: documentType,
-          clientDocument: documentNumber,
-          clientEmail: shipping.buyerEmail,
-          installmentsId: installmentsId || undefined,
-          shippingData: {
-            ...shipping,
-            shippingCountry: ALLOWED_SHIPPING_COUNTRY,
-            shippingStreet: "",
-            shippingNumber: "",
-            shippingApartment: "",
-            shippingCity: "",
-            shippingState: "",
-            shippingPostalCode: "",
-          },
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error ?? "No se pudo confirmar el pago");
-      }
-
-      const confirmedOrderId = String(data.orderIds?.[0] ?? paymentOrderId);
-      setPaymentOrderId(confirmedOrderId);
-
-      if (data.checkout?.redirectUrl) {
-        window.location.href = String(data.checkout.redirectUrl);
-        return;
-      }
-
-      if (data.payment?.success === true) {
-        window.location.href = `/orders/${confirmedOrderId}/success`;
-        return;
-      }
-
-      setPaymentStatus(String(data.payment?.status ?? "PENDING"));
-      setError(data.payment?.message ?? "El pago quedo pendiente de confirmacion.");
-    } catch (err) {
-      resetCardSession(false);
-      const message = err instanceof Error ? err.message : "No se pudo procesar el pago";
-      setError(
-        `${message} Revisa los datos y volve a presionar Continuar al pago para generar un nuevo intento.`
-      );
     } finally {
       setLoading(false);
     }
@@ -399,20 +347,20 @@ export default function DlocalGoCheckoutClient({
               <div>
                 <p className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-700">
                   <PackageCheck className="h-3.5 w-3.5" />
-                  Orden #{order.id}
+                  Orden #{paymentOrderId}
                 </p>
                 <h1 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
                   Finaliza tu compra
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Pago seguro con dLocal Go y datos protegidos durante todo el proceso.
+                  Pago seguro con Mercado Pago y datos protegidos durante todo el proceso.
                 </p>
               </div>
 
               <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 shadow-sm backdrop-blur md:min-w-80">
                 <StepBadge active completed={accessConfirmed} icon={<UserRound className="h-4 w-4" />} label="Datos" />
-                <StepBadge active={accessConfirmed} completed={paymentStatus === "PAID"} icon={<CreditCard className="h-4 w-4" />} label="Pago" />
-                <StepBadge active={paymentStatus === "PAID"} completed={paymentStatus === "PAID"} icon={<ShieldCheck className="h-4 w-4" />} label="Listo" />
+                <StepBadge active={accessConfirmed} completed={paymentStatus === "approved"} icon={<CreditCard className="h-4 w-4" />} label="Pago" />
+                <StepBadge active={paymentStatus === "approved"} completed={paymentStatus === "approved"} icon={<ShieldCheck className="h-4 w-4" />} label="Listo" />
               </div>
             </div>
           </div>
@@ -444,7 +392,7 @@ export default function DlocalGoCheckoutClient({
 
               <button
                 type="button"
-                onClick={createTransparentPayment}
+                onClick={createPaymentSession}
                 disabled={loading}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
@@ -463,62 +411,19 @@ export default function DlocalGoCheckoutClient({
                 <div className="space-y-4">
                   <SectionTitle
                     icon={<CreditCard className="h-5 w-5" />}
-                    title="Tarjeta"
-                    description="Ingresa los datos de pago en el formulario seguro."
+                    title="Pago"
+                    description="Selecciona el medio de pago y completa los datos en Mercado Pago."
                   />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Tipo de documento
-                      <select
-                        value={documentType}
-                        onChange={(event) => setDocumentType(event.target.value)}
-                        className={inputClassName}
-                      >
-                        <option value="CI">CI</option>
-                        <option value="RUT">RUT</option>
-                      </select>
-                    </label>
-                    <TextField label="Documento" value={documentNumber} onChange={setDocumentNumber} />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700">
-                      Datos de la tarjeta
-                    </label>
-                    <div
-                      ref={cardContainerRef}
-                      className="mt-2 min-h-14 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition hover:border-slate-300 focus-within:border-orange-400 focus-within:ring-4 focus-within:ring-orange-100"
-                    />
-                  </div>
-
-                  {installments.length > 1 && (
-                    <label className="block text-sm font-medium text-slate-700">
-                      Cuotas
-                      <select
-                        value={installmentsId}
-                        onChange={(event) => setInstallmentsId(event.target.value)}
-                        className={inputClassName}
-                      >
-                        <option value="">Selecciona una opcion</option>
-                        {installments.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.installments} cuotas de {option.currency}{" "}
-                            {option.installment_amount}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                  <div
+                    id={paymentBrickContainerId}
+                    className="min-h-72 rounded-2xl border border-slate-200 bg-white p-2"
+                  />
+                  {!brickReady && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
+                      <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
+                      <span>Cargando Mercado Pago...</span>
+                    </div>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={submitPayment}
-                    disabled={loading || !cardReady}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <LockKeyhole className="h-4 w-4" />
-                    {loading ? "Procesando..." : "Pagar ahora"}
-                  </button>
                 </div>
               )}
             </div>
@@ -610,7 +515,7 @@ export default function DlocalGoCheckoutClient({
             {loading && (
               <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
                 <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
-                <span>Procesando pago con dLocal Go...</span>
+                <span>Procesando pago con Mercado Pago...</span>
               </div>
             )}
 

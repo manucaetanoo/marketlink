@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { getDlocalGoSmartFieldsConfig } from "@/lib/payments/dlocalgo";
+import { getMercadoPagoPublicConfig } from "@/lib/payments/mercadopago";
 import { prisma } from "@/lib/prisma";
-import DlocalGoCheckoutClient from "./DlocalGoCheckoutClient";
+import MercadoPagoCheckoutClient from "./MercadoPagoCheckoutClient";
 
 type Props = {
   params: Promise<{ orderId: string }>;
@@ -100,15 +100,15 @@ export default async function CheckoutOrderPage({ params }: Props) {
       product: item.product,
     })),
   };
-  const smartFieldsConfig = getDlocalGoSmartFieldsConfig();
+  const mercadoPagoConfig = getMercadoPagoPublicConfig();
 
   return (
     <main className="min-h-screen bg-[#fffaf5] px-4 py-10 md:px-8">
       <div className="mx-auto max-w-6xl">
-        <DlocalGoCheckoutClient
+        <MercadoPagoCheckoutClient
           order={order}
-          smartFieldsApiKey={smartFieldsConfig.smartFieldsApiKey}
-          sdkUrl={smartFieldsConfig.sdkUrl}
+          publicKey={mercadoPagoConfig.publicKey}
+          sdkUrl={mercadoPagoConfig.sdkUrl}
         />
       </div>
     </main>

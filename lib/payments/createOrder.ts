@@ -272,7 +272,7 @@ export async function createCheckoutOrder(
         platformAmount,
 
         sellerAmount,
-        paymentProvider: "dlocalgo",
+        paymentProvider: "mercadopago",
         paymentStatus: "pending",
         ...(shippingData ? shippingData : {}),
       },

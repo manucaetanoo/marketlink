@@ -138,7 +138,7 @@ export async function markOrderPaidAndNotify({
       data: {
         status: OrderStatus.PAID,
         paymentStatus,
-        paymentProvider: paymentProvider ?? order.paymentProvider ?? "dlocalgo",
+        paymentProvider: paymentProvider ?? order.paymentProvider ?? "mercadopago",
         paymentId: paymentId ?? order.paymentId ?? `pay_${order.id}`,
       },
     });

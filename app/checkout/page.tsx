@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { getDlocalGoSmartFieldsConfig } from "@/lib/payments/dlocalgo";
+import { getMercadoPagoPublicConfig } from "@/lib/payments/mercadopago";
 import { prisma } from "@/lib/prisma";
 import { getCheckoutTotalWithTax } from "@/lib/taxes";
-import DlocalGoCheckoutClient from "./[orderId]/DlocalGoCheckoutClient";
+import MercadoPagoCheckoutClient from "./[orderId]/MercadoPagoCheckoutClient";
 
 type DraftCheckoutItem = {
   productId: string;
@@ -92,12 +92,12 @@ export default async function DraftCheckoutPage({
   });
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.total, 0);
   const { total, taxAmount } = getCheckoutTotalWithTax(subtotal);
-  const smartFieldsConfig = getDlocalGoSmartFieldsConfig();
+  const mercadoPagoConfig = getMercadoPagoPublicConfig();
 
   return (
     <main className="min-h-screen bg-[#fffaf5] px-4 py-10 md:px-8">
       <div className="mx-auto max-w-6xl">
-        <DlocalGoCheckoutClient
+        <MercadoPagoCheckoutClient
           order={{
             id: "pendiente",
             total,
@@ -121,8 +121,8 @@ export default async function DraftCheckoutPage({
             items: checkoutItems,
           }}
           draftItems={draftItems}
-          smartFieldsApiKey={smartFieldsConfig.smartFieldsApiKey}
-          sdkUrl={smartFieldsConfig.sdkUrl}
+          publicKey={mercadoPagoConfig.publicKey}
+          sdkUrl={mercadoPagoConfig.sdkUrl}
         />
       </div>
     </main>

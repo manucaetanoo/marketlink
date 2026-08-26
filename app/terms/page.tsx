@@ -46,7 +46,7 @@ const sections = [
   {
     title: "Compras, pagos y confirmación de órdenes",
     paragraphs: [
-      "Las compras realizadas dentro de Afilink se procesan mediante proveedores externos de pago, incluyendo dLocal Go u otros proveedores que la plataforma pueda incorporar. Afilink no controla todos los tiempos, aprobaciones, rechazos, validaciones, comisiones, impuestos o retenciones aplicadas por dichos proveedores, por lo que algunas operaciones pueden quedar sujetas a verificaciones adicionales.",
+      "Las compras realizadas dentro de Afilink se procesan mediante proveedores externos de pago, incluyendo Mercado Pago u otros proveedores que la plataforma pueda incorporar. Afilink no controla todos los tiempos, aprobaciones, rechazos, validaciones, comisiones, impuestos o retenciones aplicadas por dichos proveedores, por lo que algunas operaciones pueden quedar sujetas a verificaciones adicionales.",
       "Una orden podrá considerarse pendiente, aprobada, rechazada, cancelada, expirada o en revisión según la información disponible en la plataforma y la respuesta del proveedor de pagos. La confirmación de pago no libera al seller de sus obligaciones respecto de la preparación, entrega y atención posterior de la compra.",
       "El comprador deberá ingresar datos de entrega completos y correctos. La falta de información, errores en la dirección, teléfonos inválidos, ausencia de respuesta o cualquier dato insuficiente podrá generar demoras, cancelaciones o la necesidad de coordinación adicional con el seller.",
     ],

@@ -32,7 +32,7 @@ const uploadAvatarToCloudinary = async (file: File) => {
   return data.secure_url as string;
 };
 
-type PayoutMethod = "BANK_TRANSFER" | "DLOCAL_GO" ;
+type PayoutMethod = "BANK_TRANSFER" | "DLOCAL_GO" | "MANUAL";
 
 type ProfileForm = {
   Nombre: string;
@@ -66,7 +66,7 @@ const TIMEZONES = [
 
 const PAYOUT_METHODS: Array<{ value: PayoutMethod; label: string }> = [
   { value: "BANK_TRANSFER", label: "Transferencia bancaria" },
-  { value: "DLOCAL_GO", label: "dLocal Go (pago manual)" },
+  { value: "MANUAL", label: "Pago manual" },
 ];
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -126,7 +126,9 @@ export default function ProfileSettingsWarmPage() {
           Nombre: u.name ?? "",
           email: u.email ?? "",
           timezone: u.timezone ?? "America/Montevideo",
-          payoutMethod: (u.payoutMethod ?? "BANK_TRANSFER") as PayoutMethod,
+          payoutMethod: (u.payoutMethod === "DLOCAL_GO"
+            ? "MANUAL"
+            : u.payoutMethod ?? "BANK_TRANSFER") as PayoutMethod,
           payoutHolderName: u.payoutHolderName ?? "",
           payoutDocumentType: u.payoutDocumentType ?? "",
           payoutDocumentNumber: u.payoutDocumentNumber ?? "",
@@ -407,7 +409,8 @@ export default function ProfileSettingsWarmPage() {
                         </select>
                       </Field>
 
-                      {form.payoutMethod === "DLOCAL_GO" && (
+                      {(form.payoutMethod === "MANUAL" ||
+                        form.payoutMethod === "DLOCAL_GO") && (
                         <div className="flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm leading-6 text-orange-900 md:col-span-2">
                           <FiInfo className="mt-1 h-4 w-4 shrink-0" />
                           <span>

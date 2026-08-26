@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST() {
   return NextResponse.json(
-    { ok: false, error: "Endpoint reemplazado por /api/payments/dlocalgo/process" },
+    { ok: false, error: "Endpoint reemplazado por /api/payments/mercadopago/process" },
     { status: 410 }
   );
 }

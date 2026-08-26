@@ -683,7 +683,7 @@ export default async function SellerDashboardPage() {
                   </p>
                   <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3">
                     <p className="text-sm leading-6 text-sky-900">
-                      Los pagos procesados con dLocal se acreditan automaticamente{" "}
+                      Los pagos procesados por Afilink se acreditan automaticamente{" "}
                       {PAYMENT_ACCREDITATION_DAYS} dias despues de la compra.
                     </p>
                   </div>
