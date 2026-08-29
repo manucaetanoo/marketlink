@@ -95,7 +95,7 @@ export default async function DraftCheckoutPage({
   const mercadoPagoConfig = getMercadoPagoPublicConfig();
 
   return (
-    <main className="min-h-screen bg-[#fffaf5] px-4 py-10 md:px-8">
+    <main className="min-h-screen bg-[#fffaf5] px-2 py-10 sm:px-4 md:px-8">
       <div className="mx-auto max-w-6xl">
         <MercadoPagoCheckoutClient
           order={{

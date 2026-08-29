@@ -344,7 +344,7 @@ export default function MercadoPagoCheckoutClient({
         <div className="overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
           <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 via-white to-amber-50 px-5 py-5 sm:px-7">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-700">
                   <PackageCheck className="h-3.5 w-3.5" />
                   Orden #{paymentOrderId}
@@ -357,7 +357,7 @@ export default function MercadoPagoCheckoutClient({
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 shadow-sm backdrop-blur md:min-w-80">
+              <div className="grid w-full grid-cols-3 gap-2 rounded-2xl border border-white/80 bg-white/80 p-2 shadow-sm backdrop-blur md:w-auto md:min-w-80">
                 <StepBadge active completed={accessConfirmed} icon={<UserRound className="h-4 w-4" />} label="Datos" />
                 <StepBadge active={accessConfirmed} completed={paymentStatus === "approved"} icon={<CreditCard className="h-4 w-4" />} label="Pago" />
                 <StepBadge active={paymentStatus === "approved"} completed={paymentStatus === "approved"} icon={<ShieldCheck className="h-4 w-4" />} label="Listo" />
@@ -366,9 +366,9 @@ export default function MercadoPagoCheckoutClient({
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)]">
-          <section className="space-y-5">
-            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(360px,0.88fr)]">
+          <section className="min-w-0 space-y-5">
+            <div className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
               <SectionTitle
                 icon={<UserRound className="h-5 w-5" />}
                 title="Datos para recibir el acceso"
@@ -401,7 +401,7 @@ export default function MercadoPagoCheckoutClient({
               </button>
             </div>
 
-            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
+            <div className="min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-2 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-6">
               {!accessConfirmed ? (
                 <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
@@ -416,7 +416,7 @@ export default function MercadoPagoCheckoutClient({
                   />
                   <div
                     id={paymentBrickContainerId}
-                    className="min-h-72 rounded-2xl border border-slate-200 bg-white p-2"
+                    className="min-h-72 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 sm:p-2"
                   />
                   {!brickReady && (
                     <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
@@ -429,7 +429,7 @@ export default function MercadoPagoCheckoutClient({
             </div>
           </section>
 
-          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
             <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)]">
               <div className="border-b border-slate-100 bg-slate-50/80 px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
