@@ -416,7 +416,7 @@ export default function MercadoPagoCheckoutClient({
                   />
                   <div
                     id={paymentBrickContainerId}
-                    className="min-h-72 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 sm:p-2"
+                    className="min-h-72 max-w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-0 sm:p-2 [&_form]:!max-w-full [&_form]:!min-w-0"
                   />
                   {!brickReady && (
                     <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
