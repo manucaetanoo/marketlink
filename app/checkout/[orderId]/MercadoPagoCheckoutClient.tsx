@@ -93,6 +93,50 @@ const paymentBrickContainerId = "paymentBrick_container";
 const inputClassName =
   "mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-orange-400 focus:ring-4 focus:ring-orange-100";
 
+function normalizeUruguayanCi(value: string) {
+  return value.replace(/\D/g, "").slice(0, 8);
+}
+
+function isValidUruguayanCi(value: string) {
+  const digits = normalizeUruguayanCi(value);
+
+  if (digits.length < 7) return false;
+
+  const padded = digits.padStart(8, "0");
+  const factors = [2, 9, 8, 7, 6, 3, 4];
+  const sum = factors.reduce(
+    (total, factor, index) => total + Number(padded[index]) * factor,
+    0
+  );
+  const checkDigit = (10 - (sum % 10)) % 10;
+
+  return checkDigit === Number(padded[7]);
+}
+
+function dispatchMercadoPagoInputEvents(input: HTMLInputElement, value: string) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    "value"
+  )?.set;
+
+  valueSetter?.call(input, value);
+
+  try {
+    input.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        data: value,
+        inputType: "insertText",
+      })
+    );
+  } catch {
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+  input.dispatchEvent(new Event("blur", { bubbles: true }));
+}
+
 function getStatusMessage(status: string | null) {
   switch (status) {
     case "approved":
@@ -129,6 +173,8 @@ export default function MercadoPagoCheckoutClient({
     order.paymentStatus
   );
   const [shipping, setShipping] = useState<ShippingData>(order.shipping);
+  const [payerDocument, setPayerDocument] = useState("");
+  const [isMobileCheckout, setIsMobileCheckout] = useState(false);
 
   const resetBrickSession = (accessConfirmedValue = false) => {
     brickControllerRef.current?.unmount();
@@ -165,6 +211,14 @@ export default function MercadoPagoCheckoutClient({
               preferenceId,
               payer: {
                 email: shipping.buyerEmail,
+                name: shipping.buyerName,
+                firstName: shipping.buyerName,
+                identification: isMobileCheckout
+                  ? {
+                      type: "CI",
+                      number: payerDocument,
+                    }
+                  : undefined,
               },
             },
             customization: {
@@ -255,7 +309,110 @@ export default function MercadoPagoCheckoutClient({
       brickControllerRef.current?.unmount();
       brickControllerRef.current = null;
     };
-  }, [preferenceId, publicKey, sdkReady, order.total, paymentOrderId, shipping.buyerEmail]);
+  }, [
+    preferenceId,
+    publicKey,
+    sdkReady,
+    order.total,
+    paymentOrderId,
+    shipping.buyerEmail,
+    shipping.buyerName,
+    payerDocument,
+    isMobileCheckout,
+  ]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const updateIsMobileCheckout = () => {
+      setIsMobileCheckout(mediaQuery.matches);
+    };
+
+    updateIsMobileCheckout();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updateIsMobileCheckout);
+    } else {
+      mediaQuery.addListener(updateIsMobileCheckout);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", updateIsMobileCheckout);
+      } else {
+        mediaQuery.removeListener(updateIsMobileCheckout);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!accessConfirmed || !isMobileCheckout) return;
+
+    const container = document.getElementById(paymentBrickContainerId);
+    const buyerName = shipping.buyerName.trim();
+
+    if (!container || !buyerName || !payerDocument) return;
+
+    const syncMercadoPagoPayerFields = () => {
+      const holderNameInput = container.querySelector<HTMLInputElement>(
+        'input[name="HOLDER_NAME"]'
+      );
+      const documentInput = container.querySelector<HTMLInputElement>(
+        'input[name="DOCUMENT"]'
+      );
+
+      if (holderNameInput) {
+        dispatchMercadoPagoInputEvents(
+          holderNameInput,
+          holderNameInput.value.trim() || buyerName
+        );
+      }
+
+      if (documentInput) {
+        dispatchMercadoPagoInputEvents(
+          documentInput,
+          normalizeUruguayanCi(documentInput.value) || payerDocument
+        );
+      }
+    };
+
+    const timeouts: number[] = [];
+    const scheduleSync = () => {
+      timeouts.push(window.setTimeout(syncMercadoPagoPayerFields, 50));
+      timeouts.push(window.setTimeout(syncMercadoPagoPayerFields, 300));
+    };
+    const syncBeforeValidation = (event: Event) => {
+      const target = event.target;
+
+      if (
+        target instanceof Element &&
+        target.closest("button")?.textContent?.includes("Pagar")
+      ) {
+        syncMercadoPagoPayerFields();
+      }
+    };
+
+    scheduleSync();
+
+    const observer = new MutationObserver(scheduleSync);
+    observer.observe(container, { childList: true, subtree: true });
+    container.addEventListener("pointerdown", syncBeforeValidation, true);
+    container.addEventListener("click", syncBeforeValidation, true);
+    container.addEventListener("focusout", scheduleSync, true);
+
+    return () => {
+      observer.disconnect();
+      container.removeEventListener("pointerdown", syncBeforeValidation, true);
+      container.removeEventListener("click", syncBeforeValidation, true);
+      container.removeEventListener("focusout", scheduleSync, true);
+      timeouts.forEach((timeout) => window.clearTimeout(timeout));
+    };
+  }, [
+    accessConfirmed,
+    brickReady,
+    isMobileCheckout,
+    payerDocument,
+    shipping.buyerName,
+  ]);
 
   const statusMessage = getStatusMessage(paymentStatus);
 
@@ -272,6 +429,12 @@ export default function MercadoPagoCheckoutClient({
     if (missingField) return "Completa tus datos para recibir el acceso antes de pagar.";
     if (!/^\S+@\S+\.\S+$/.test(shipping.buyerEmail.trim())) {
       return "Ingresa un email valido para recibir la confirmacion.";
+    }
+    if (isMobileCheckout && !payerDocument) {
+      return "Ingresa la cedula del titular antes de continuar al pago.";
+    }
+    if (isMobileCheckout && !isValidUruguayanCi(payerDocument)) {
+      return "Ingresa una cedula uruguaya valida para continuar al pago.";
     }
 
     return null;
@@ -379,6 +542,20 @@ export default function MercadoPagoCheckoutClient({
                 <TextField label="Nombre completo" value={shipping.buyerName} onChange={(value) => setShippingField("buyerName", value)} autoComplete="name" />
                 <TextField label="Email" value={shipping.buyerEmail} onChange={(value) => setShippingField("buyerEmail", value)} type="email" autoComplete="email" />
                 <TextField label="Telefono" value={shipping.buyerPhone} onChange={(value) => setShippingField("buyerPhone", value.replace(/\D/g, "").slice(0, 9).replace(/(\d{3})(\d{3})(\d{0,3})/, (_match, g1, g2, g3) => (g3 ? `${g1} ${g2} ${g3}` : `${g1} ${g2}`)))} type="tel" autoComplete="tel" />
+                <label className="block text-sm font-medium text-slate-700 sm:hidden">
+                  Cedula del titular
+                  <input
+                    value={payerDocument}
+                    onChange={(event) => {
+                      setPayerDocument(normalizeUruguayanCi(event.target.value));
+                      resetBrickSession(false);
+                    }}
+                    className={inputClassName}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="Ej: 45454545"
+                  />
+                </label>
                 <label className="block text-sm font-medium text-slate-700 sm:col-span-2">
                   Indicaciones para el vendedor
                   <textarea
