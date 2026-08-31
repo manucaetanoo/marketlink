@@ -21,7 +21,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   const token = await getToken(searchParams);
   let title = "Link invalido";
   let message = "El link de verificacion no es valido o ya vencio.";
-  let callbackUrl = "/products";
+  let callbackUrl = "/inicio";
   let verified = false;
 
   if (token) {
@@ -59,12 +59,9 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
       ]);
 
       verified = true;
-      callbackUrl = getPostVerificationPath(verificationToken.user.role);
+      callbackUrl = getPostVerificationPath();
       title = "Email verificado";
-      message =
-        verificationToken.user.role === "SELLER"
-          ? "Tu email quedo verificado. Inicia sesion para ir a tu inicio."
-          : "Tu email quedo verificado. Inicia sesion para seguir usando Afilink.";
+      message = "Tu email quedo verificado. Inicia sesion para ir a tu inicio.";
     }
   }
 

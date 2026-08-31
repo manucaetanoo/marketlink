@@ -12,7 +12,16 @@ export const metadata: Metadata = {
 const supportEmail =
   process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "infoafilink@gmail.com";
 
-export default function ContactPage() {
+type ContactPageProps = {
+  searchParams?: Promise<{ tipo?: string }> | { tipo?: string };
+};
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const params = await searchParams;
+  const isCompanyRequest = params?.tipo === "empresa";
+  const initialKind = isCompanyRequest ? "Solicitud de cuenta empresa" : undefined;
+  const initialSubject = isCompanyRequest ? "Solicitud para vender en Afilink" : undefined;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <Navbar />
@@ -71,7 +80,11 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <ContactMailForm supportEmail={supportEmail} />
+          <ContactMailForm
+            supportEmail={supportEmail}
+            initialKind={initialKind}
+            initialSubject={initialSubject}
+          />
         </section>
       </main>
     </div>

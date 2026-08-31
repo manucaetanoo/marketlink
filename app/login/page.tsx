@@ -1,13 +1,11 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { PulseLoader } from "react-spinners";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,16 +15,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-    const safeCallbackUrl =
-      callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
-        ? callbackUrl
-        : "/inicio";
+    const postLoginUrl = "/inicio";
 
     const res = await signIn("credentials", {
       email,
       password,
-      callbackUrl: safeCallbackUrl,
+      callbackUrl: postLoginUrl,
       redirect: false,
     });
 
@@ -40,7 +34,7 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    window.location.assign(res.url ?? safeCallbackUrl);
+    window.location.assign(postLoginUrl);
   }
 
   return (

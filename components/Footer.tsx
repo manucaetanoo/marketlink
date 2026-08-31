@@ -18,10 +18,9 @@ const navigation: Navigation = {
     { name: "Consultar compra", href: "/pedido" },
   ],
   sellers: [
-    { name: "Crear cuenta", href: "/register" },
+    { name: "Solicitar cuenta empresa", href: "/contacto?tipo=empresa" },
     { name: "Ingresar", href: "/login" },
     { name: "Panel vendedor", href: "/dashboard/seller" },
-    { name: "Crear producto", href: "/seller/products/new" },
   ],
   support: [
     { name: "Contacto", href: "/contacto" },
@@ -41,9 +40,24 @@ export default function Footer() {
             <img alt="Afilink" src="/img/logosbg.png" className="h-9" />
 
             <p className="max-w-sm text-sm/6 text-balance text-slate-600">
-              Afilink conecta vendedores, afiliados y compradores en un marketplace
-              pensado para promocionar productos por comision.
+              Afilink conecta productos digitales aprobados con afiliados en un
+              marketplace pensado para promocionar por comision.
             </p>
+
+            <div className="rounded-lg border border-orange-100 bg-orange-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">
+                ¿Querés vender en Afilink?
+              </p>
+              <p className="mt-1 text-sm/6 text-slate-600">
+                Completá el formulario y revisamos tu solicitud de empresa por mail.
+              </p>
+              <Link
+                href="/contacto?tipo=empresa"
+                className="mt-3 inline-flex rounded-md bg-[#F78211] px-3 py-2 text-sm font-semibold text-white transition hover:bg-orange-500"
+              >
+                Solicitar cuenta empresa
+              </Link>
+            </div>
 
           </div>
 

@@ -1,18 +1,14 @@
 "use client";
 
-import Navbar from "@/components/Navbarv2"
 import { useState } from "react";
 import Link from "next/link";
-import Toggle from "@/components/Toggle"
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
-  //const [name, setName] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [terms, setTerms] = useState(false);
-  const [selected, setSelected] = useState("SELLER");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +36,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role:selected }),
+      body: JSON.stringify({ name, email, password, role: "AFFILIATE" }),
     });
 
     setLoading(false);
@@ -98,8 +94,11 @@ export default function RegisterPage() {
           className="mx-auto h-10 w-auto"
         />
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Registrarse
+          Registrarse como afiliado
         </h2>
+        <p className="mt-2 text-center text-sm leading-6 text-slate-600">
+          Las cuentas de empresa se aprueban por solicitud.
+        </p>
       </div>
       
       <div className="max-w-md w-full mx-auto  rounded-2xl p-8">
@@ -163,9 +162,13 @@ export default function RegisterPage() {
                 placeholder="Confirmar contraseña"
               />
             </div>
-            <div>
-            <p className="text-slate-900 text-sm font-medium mb-2 block">Seleccionar Rol</p>
-            <Toggle selected={selected} setSelected={setSelected} />
+            <div className="rounded-lg border border-orange-100 bg-orange-50 px-4 py-3 text-sm leading-6 text-orange-900">
+              Estás creando una cuenta de afiliado. Si querés vender productos
+              digitales en Afilink, solicitá una cuenta de empresa desde{" "}
+              <Link href="/contacto?tipo=empresa" className="font-semibold underline">
+                este formulario
+              </Link>
+              .
             </div>
 
             <div className="flex items-center">

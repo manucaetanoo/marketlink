@@ -25,11 +25,19 @@ export async function POST(req: Request) {
   const email = String(body.email || "").toLowerCase().trim();
   const password = String(body.password || "");
   const name = body.name ? String(body.name).trim() : null;
-  const allowedRoles: Role[] = [Role.SELLER, Role.AFFILIATE];
-  const role =
-    body.role && allowedRoles.includes(body.role.toUpperCase() as Role)
-      ? (body.role.toUpperCase() as Role)
-      : Role.SELLER;
+  const requestedRole = body.role ? String(body.role).toUpperCase() : Role.AFFILIATE;
+
+  if (requestedRole !== Role.AFFILIATE) {
+    return NextResponse.json(
+      {
+        error:
+          "Por ahora las cuentas de empresa se solicitan por mail desde el formulario de contacto.",
+      },
+      { status: 403 }
+    );
+  }
+
+  const role = Role.AFFILIATE;
 
 
   if (!email || !password) {

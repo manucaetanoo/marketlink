@@ -19,8 +19,8 @@ export function getAppUrl(req: Request) {
   return `${url.protocol}//${url.host}`;
 }
 
-export function getPostVerificationPath(role: Role) {
-  return role === "SELLER" ? "/inicio" : "/products";
+export function getPostVerificationPath() {
+  return "/inicio";
 }
 
 export async function sendEmailVerification({

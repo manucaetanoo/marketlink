@@ -19,14 +19,14 @@ const steps = [
     label: "Paso 1",
     title: "Crea tu cuenta",
     description:
-      "Registrate gratis y elegí si querés vender tus productos o generar ingresos como afiliado.",
+      "Registrate gratis como afiliado para empezar a promocionar productos digitales aprobados.",
     icon: UserIcon,
   },
   {
     label: "Paso 2",
-    title: "Publica o elige un producto",
+    title: "Elegí un producto",
     description:
-      "Si sos vendedor, publicá productos digitales. Si sos afiliado, elegí un producto para promocionar.",
+      "Seleccioná un producto digital disponible en el marketplace para promocionar.",
     icon: MegaphoneIcon,
   },
   {
@@ -42,7 +42,7 @@ const features = [
   {
     name: "Vendé con afiliados",
     description:
-      "Publicá productos digitales y permití que otras personas los promocionen por comisión.",
+      "Las empresas aprobadas pueden sumar productos digitales y permitir que afiliados los promocionen por comisión.",
     icon: ShoppingBagIcon,
   },
   {
@@ -54,7 +54,7 @@ const features = [
   {
     name: "Dashboard claro",
     description:
-      "Visualizá ventas, comisiones, productos y afiliados desde un panel simple.",
+      "Visualizá ventas, comisiones y links desde un panel simple.",
     icon: ChartBarIcon,
   },
   {
@@ -69,7 +69,7 @@ const roles = [
   {
     name: "Para vendedores",
     description:
-      "Ideal para creadores, emprendedores y vendedores que ofrecen cursos, ebooks, membresías, software, plantillas o servicios digitales.",
+      "Para creadores, emprendedores y empresas aprobadas que ofrecen cursos, ebooks, membresías, software, plantillas o servicios digitales.",
     features: [
       "Publicá productos digitales",
       "Generá links de afiliado",
@@ -96,7 +96,7 @@ const faqs = [
   {
     question: "¿Qué es Afilink?",
     answer:
-      "Afilink es una plataforma que conecta vendedores de productos digitales con afiliados. Los vendedores publican productos y los afiliados los promocionan a cambio de una comisión.",
+      "Afilink es una plataforma que conecta productos digitales aprobados con afiliados. Los afiliados promocionan productos a cambio de una comisión.",
   },
   {
     question: "¿Cómo gana dinero un afiliado?",
@@ -106,7 +106,7 @@ const faqs = [
   {
     question: "¿Qué beneficio tiene un vendedor?",
     answer:
-      "Puede aumentar el alcance de sus productos porque otras personas los promocionan. Solo paga comisión cuando se genera una venta.",
+      "Puede aumentar el alcance de sus productos porque otras personas los promocionan. Por ahora, las cuentas de empresa se aprueban por solicitud.",
   },
 ];
 
@@ -165,7 +165,7 @@ export default function Home() {
               transition={{ duration: 0.45, ease: "easeOut" }}
               className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8"
             >
-              En Afilink conectamos vendedores de productos digitales con promotores que buscan generar ingresos por internet.
+              En Afilink conectamos productos digitales aprobados con promotores que buscan generar ingresos por internet.
             </motion.p>
 
             <motion.div
@@ -227,7 +227,7 @@ export default function Home() {
               Empezar en Afilink es simple
             </p>
             <p className="mt-6 text-lg text-gray-500">
-              En pocos pasos podés vender productos o generar comisiones como afiliado.
+              En pocos pasos podés registrarte como afiliado, elegir productos y generar comisiones.
             </p>
           </motion.div>
 
@@ -271,7 +271,7 @@ export default function Home() {
           >
             <h2 className="text-base font-semibold text-[#F78211]">Beneficios</h2>
             <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-              Todo lo necesario para vender y promocionar
+              Todo lo necesario para promocionar productos digitales
             </p>
           </div>
 
@@ -303,7 +303,7 @@ export default function Home() {
             >
               <h2 className="text-base font-semibold text-[#F78211]">Elegí tu rol</h2>
               <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                Una plataforma para vendedores y afiliados
+                Una plataforma para empresas aprobadas y afiliados
               </p>
             </div>
 
@@ -342,10 +342,10 @@ export default function Home() {
                   </ul>
 
                   <Link
-                    href="/register"
+                    href={role.name === "Para vendedores" ? "/contacto?tipo=empresa" : "/register"}
                     className="mt-8 block rounded-md bg-[#F78211] px-3 py-2 text-center text-sm font-semibold text-white hover:bg-[#d98b3f]"
                   >
-                    Empezar ahora
+                    {role.name === "Para vendedores" ? "Solicitar cuenta empresa" : "Empezar ahora"}
                   </Link>
                 </motion.div>
               ))}
@@ -389,10 +389,10 @@ export default function Home() {
             className="mx-auto max-w-3xl rounded-3xl bg-gray-950 px-6 py-16 text-center shadow-xl sm:px-12"
           >
             <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              Empezá a vender más o generar comisiones hoy
+              Empezá a generar comisiones hoy
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-gray-300">
-              Afilink te da una forma simple de conectar productos digitales con personas que pueden ayudarte a crecer.
+              Afilink te da una forma simple de conectar productos digitales aprobados con personas que pueden ayudar a promocionarlos.
             </p>
 
             <div className="mt-10 flex items-center justify-center gap-x-6">

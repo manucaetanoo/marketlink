@@ -5,13 +5,19 @@ import { FiMail, FiSend } from "react-icons/fi";
 
 type ContactMailFormProps = {
   supportEmail: string;
+  initialKind?: string;
+  initialSubject?: string;
 };
 
-export default function ContactMailForm({ supportEmail }: ContactMailFormProps) {
+export default function ContactMailForm({
+  supportEmail,
+  initialKind = "Consulta general",
+  initialSubject = "",
+}: ContactMailFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [kind, setKind] = useState("Consulta general");
+  const [subject, setSubject] = useState(initialSubject);
+  const [kind, setKind] = useState(initialKind);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -36,7 +42,7 @@ export default function ContactMailForm({ supportEmail }: ContactMailFormProps) 
       setName("");
       setEmail("");
       setSubject("");
-      setKind("Consulta general");
+      setKind(initialKind);
       setMessage("");
       setStatus("Mensaje enviado. Te vamos a responder por mail.");
     } catch (error) {
@@ -106,6 +112,7 @@ export default function ContactMailForm({ supportEmail }: ContactMailFormProps) 
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition focus:border-slate-400 focus:ring-4 focus:ring-slate-100"
             >
               <option>Consulta general</option>
+              <option>Solicitud de cuenta empresa</option>
               <option>Cuenta y acceso</option>
               <option>Productos y campañas</option>
               <option>Pagos y comisiones</option>
