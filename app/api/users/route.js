@@ -124,6 +124,7 @@ export async function GET(req) {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        lastLoginAt: true,
       },
     });
 

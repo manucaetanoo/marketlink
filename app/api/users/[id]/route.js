@@ -22,6 +22,7 @@ export async function GET(req, context) {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        lastLoginAt: true,
       },
     });
 

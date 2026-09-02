@@ -7,6 +7,17 @@ import { prisma } from "@/lib/prisma";
 // Usamos JWT que es como una cookie segura, pero sin necesidad de guardar nada en el servidor
 //El cliente guarda el JWT y lo manda en cada petición, y el servidor lo verifica y lee los datos que le pusimos (id, role, etc)
 
+async function recordSuccessfulLogin(userId: string) {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+      select: { id: true },
+    });
+  } catch (error) {
+    console.error("No se pudo actualizar lastLoginAt", error);
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -43,6 +54,8 @@ export const authOptions: NextAuthOptions = {
         // 3) Comparar password
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
+
+        await recordSuccessfulLogin(user.id);
 
         // 4) Usuario válido → lo devolvemos
         return {
