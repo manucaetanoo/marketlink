@@ -1,416 +1,72 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { FlipWords } from "@/components/ui/FlipWords";
-import {
-  UserIcon,
-  MegaphoneIcon,
-  ChartBarIcon,
-  ShoppingBagIcon,
-  CursorArrowRaysIcon,
-  ShieldCheckIcon,
-} from "@heroicons/react/24/outline";
-import { CheckIcon } from "@heroicons/react/20/solid";
+import { DM_Sans, Manrope } from "next/font/google";
 import HomeNavbar from "@/components/HomeNavbar";
+import { FlipWords } from "@/components/ui/FlipWords";
+import s from "./home.module.css";
 
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--home-body" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--home-heading" });
+const words = ["ingresos", "ventas", "ganancias", "comisiones"];
 const steps = [
-  {
-    label: "Paso 1",
-    title: "Crea tu cuenta",
-    description:
-      "Registrate gratis como afiliado para empezar a promocionar productos digitales aprobados.",
-    icon: UserIcon,
-  },
-  {
-    label: "Paso 2",
-    title: "Elegí un producto",
-    description:
-      "Seleccioná un producto digital disponible en el marketplace para promocionar.",
-    icon: MegaphoneIcon,
-  },
-  {
-    label: "Paso 3",
-    title: "Compartí tu link y genera ventas",
-    description:
-      "Compartí tu link de afiliado, generá ventas y seguí tus comisiones desde el dashboard.",
-    icon: ChartBarIcon,
-  },
+  ["Elegí qué recomendar", "Creá tu cuenta gratis y explorá los productos digitales disponibles."],
+  ["Compartí tu enlace", "Generá tu link de afiliado y compartilo junto con tu recomendación."],
+  ["Ganá una comisión", "Si una persona compra desde tu enlace y la venta se confirma, se genera tu comisión."],
 ];
-
-const features = [
-  {
-    name: "Vendé con afiliados",
-    description:
-      "Las empresas aprobadas pueden sumar productos digitales y permitir que afiliados los promocionen por comisión.",
-    icon: ShoppingBagIcon,
-  },
-  {
-    name: "Links personalizados",
-    description:
-      "Cada afiliado obtiene su propio link para compartir productos y generar ventas rastreables.",
-    icon: CursorArrowRaysIcon,
-  },
-  {
-    name: "Dashboard claro",
-    description:
-      "Visualizá ventas, comisiones y links desde un panel simple.",
-    icon: ChartBarIcon,
-  },
-  {
-    name: "Comisiones transparentes",
-    description:
-      "Se muestra de forma clara cuánto se cobra, cuánto gana el vendedor y cuánto gana el afiliado.",
-    icon: ShieldCheckIcon,
-  },
-];
-
-const roles = [
-  {
-    name: "Para vendedores",
-    description:
-      "Para creadores, emprendedores y empresas aprobadas que ofrecen cursos, ebooks, membresías, software, plantillas o servicios digitales.",
-    features: [
-      "Publicá productos digitales",
-      "Generá links de afiliado",
-      "Trabajá con afiliados",
-      "Pagá comisión solo cuando vendés",
-    ],
-    highlighted: true,
-  },
-  {
-    name: "Para afiliados",
-    description:
-      "Pensado para personas que quieren generar ingresos recomendando productos digitales.",
-    features: [
-      "Elegí productos",
-      "Compartí tu link",
-      "Generá comisiones",
-      "Seguí tus resultados",
-    ],
-    highlighted: false,
-  },
-];
-
 const faqs = [
-  {
-    question: "¿Qué es Afilink?",
-    answer:
-      "Afilink es una plataforma que conecta productos digitales aprobados con afiliados. Los afiliados promocionan productos a cambio de una comisión.",
-  },
-  {
-    question: "¿Cómo gana dinero un afiliado?",
-    answer:
-      "El afiliado comparte su link personalizado el cual le brinda Afilink. Cuando una persona compra desde ese link y la venta se confirma, se genera una comisión.",
-  },
-  {
-    question: "¿Qué beneficio tiene un vendedor?",
-    answer:
-      "Puede aumentar el alcance de sus productos porque otras personas los promocionan. Por ahora, las cuentas de empresa se aprueban por solicitud.",
-  },
+  ["¿Registrarme tiene algún costo?", "No. Crear tu cuenta como afiliado en Afilink es gratis."],
+  ["¿Cómo gano dinero?", "Compartís tu enlace de afiliado. Cuando alguien compra desde él y la venta se confirma, se genera una comisión para vos. Podés seguir tus enlaces, ventas y comisiones desde tu panel."],
+  ["¿Cuánto puedo ganar?", "Depende de la comisión del producto y de las ventas confirmadas que lleguen desde tu enlace. Revisá la comisión disponible antes de elegir qué promocionar. El registro por sí solo no genera ingresos."],
+  ["¿Tengo que crear un curso o un ebook?", "No. Elegís entre los productos digitales disponibles en Afilink y los recomendás con tu propio enlace."],
+  ["¿Qué hago después de crear mi cuenta?", "Explorá los productos, elegí uno que conozcas y que le pueda servir a tu público, generá tu enlace y empezá a compartirlo con una recomendación clara."],
+];
+const products = [
+  { art: "canva", label: "DISEÑO", name: "Canva", tagline: "DE LA IDEA AL DISEÑO", type: "CURSO ONLINE", title: "Domina Canva como un Pro", description: "Para quienes quieren aprender a crear diseños." },
+  { art: "capcut", label: "CREACIÓN DE CONTENIDO", name: "CapCut", tagline: "VIDEOS QUE COMUNICAN", type: "CURSO ONLINE", title: "CapCut ADS", description: "Para quienes quieren crear anuncios en video." },
+  { art: "ebook", label: "GUÍA DIGITAL", name: "Iniciando", tagline: "UN PUNTO DE PARTIDA CREATIVO", type: "EBOOK", title: "Iniciando en Canva", description: "Para quienes buscan dar sus primeros pasos en diseño." },
 ];
 
-const softReveal = {
-  hidden: { opacity: 0, y: 18 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const quickStagger = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.06,
-    },
-  },
-};
-
-const viewportOnce = { once: true, amount: 0.25 };
+function RegisterLink({ children }: { children: React.ReactNode }) {
+  return <Link className={s.button} href="/register">{children}<span aria-hidden="true">↗</span></Link>;
+}
 
 export default function Home() {
   return (
-    <div className="bg-white text-gray-900">
+    <div className={`${dmSans.variable} ${manrope.variable}`}>
       <HomeNavbar />
-
-      <main className="isolate">
-        <section id="inicio" className="relative isolate overflow-hidden px-6 pt-14 lg:px-8">
-          <div className="absolute inset-x-0 -top-40 -z-10 blur-3xl sm:-top-80">
-            <div
-              className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#E89C51] to-orange-200 opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72rem]"
-            />
+      <main className={s.home} id="inicio">
+        <section className={`${s.hero} ${s.wrap}`} aria-labelledby="hero-title">
+          <div>
+            <p className={s.eyebrow}><span className={s.shortLine} />SUMATE COMO AFILIADO</p>
+            <h1 id="hero-title">¿Querés generar <span className={s.flipSlot}><FlipWords words={words} duration={2000} className={s.flipWords} /></span> desde tu casa?</h1>
+            <p className={s.heroDescription}>Recomendá productos digitales y <strong>ganá dinero por cada venta realizada desde tu enlace.</strong></p>
+            <RegisterLink>Quiero registrarme gratis</RegisterLink>
+            <p className={s.micro}><span aria-hidden="true">✓</span> Registro gratuito <span className={s.divider}>/</span> Sin crear un producto propio</p>
+            <a className={s.textLink} href="#como-funciona">Conocé cómo funciona <span aria-hidden="true">↓</span></a>
           </div>
-
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={quickStagger}
-            className="mx-auto max-w-3xl py-32 text-center sm:py-48 lg:py-56"
-          >
-
-            <motion.h1
-              variants={softReveal}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="text-5xl font-semibold tracking-tight text-balance text-gray-900 sm:text-7xl"
-            >
-              Haz crecer tus{" "}
-              <span className="text-[#E89C51]">
-                <FlipWords
-                  words={["ingresos", "ventas", "ganancias", "comisiones"]}
-                  duration={2000}
-                />
-              </span>
-            </motion.h1>
-
-            <motion.p
-              variants={softReveal}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="mt-8 text-lg font-medium text-pretty text-gray-500 sm:text-xl/8"
-            >
-              En Afilink conectamos productos digitales aprobados con promotores que buscan generar ingresos por internet.
-            </motion.p>
-
-            <motion.div
-              variants={softReveal}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="mt-10 flex items-center justify-center gap-x-6"
-            >
-              <Link
-                href="/register"
-                className="rounded-md bg-[#F78211] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d98b3f]"
-              >
-                Únete ahora
-              </Link>
-
-              <a href="#como-funciona" className="text-sm font-semibold text-gray-900">
-                Ver más <span aria-hidden="true">→</span>
-              </a>
-            </motion.div>
-          </motion.div>
-        </section>
-
-{/* <section className="mx-auto max-w-7xl px-6 lg:px-8">
-  <div className="rounded-3xl border border-[#E89C51]/10 bg-[#f8f6f3] p-6 shadow-xl shadow-orange-950/5 sm:p-10">
-    <div className="grid gap-6 lg:grid-cols-3">
-      {stats.map(([label, value, Icon]) => (
-        <div
-          key={label}
-          className="group rounded-2xl border border-orange-100 bg-gradient-to-br from-white via-[#fffdfb] to-orange-50/40 p-6 transition hover:-translate-y-1 hover:border-[#E89C51]/40 hover:shadow-lg hover:shadow-orange-950/10"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E89C51]/30 text-[#E89C51] ring-1 ring-[#E89C51]/20 transition group-hover:bg-[#E89C51] group-hover:text-white">
-            <Icon className="h-6 w-6" />
-          </div>
-
-          <p className="mt-6 text-sm font-medium text-gray-500">
-            {label}
-          </p>
-
-          <p className="mt-2 text-3xl font-semibold text-gray-950">
-            {value}
-          </p>
-        </div>
-      ))}
-    </div>
-  </div>
-</section> */}
-
-
-        <section id="como-funciona" className="relative px-6 py-24 sm:py-32 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={softReveal}
-            transition={{ duration: 0.42, ease: "easeOut" }}
-            viewport={viewportOnce}
-            className="mx-auto max-w-2xl text-center"
-          >
-            <h2 className="text-base font-semibold text-[#F78211]">¿Cómo empezar?</h2>
-            <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-              Empezar en Afilink es simple
-            </p>
-            <p className="mt-6 text-lg text-gray-500">
-              En pocos pasos podés registrarte como afiliado, elegir productos y generar comisiones.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={quickStagger}
-            viewport={viewportOnce}
-            className="mx-auto mt-20 grid max-w-6xl gap-8 lg:grid-cols-3"
-          >
-            {steps.map((step) => (
-              <motion.div
-                key={step.title}
-                variants={softReveal}
-                transition={{ duration: 0.38, ease: "easeOut" }}
-                whileHover={{ y: -4 }}
-                className="rounded-3xl border border-orange-100 bg-white p-8 shadow-sm transition-colors hover:border-[#E89C51]/40"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.04 }}
-                  transition={{ duration: 0.18 }}
-                  className="flex size-14 items-center justify-center rounded-2xl bg-orange-50 text-[#F78211]"
-                >
-                  <step.icon className="size-7" />
-                </motion.div>
-
-                <span className="mt-8 block text-sm font-semibold text-[#F78211]">
-                  {step.label}
-                </span>
-
-                <h3 className="mt-2 text-2xl font-semibold text-gray-900">{step.title}</h3>
-                <p className="mt-3 text-gray-500">{step.description}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </section>
-
-        <section id="beneficios" className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <div
-            className="mx-auto max-w-2xl lg:text-center"
-          >
-            <h2 className="text-base font-semibold text-[#F78211]">Beneficios</h2>
-            <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-              Todo lo necesario para promocionar productos digitales
-            </p>
-          </div>
-
-          <div
-            className="mx-auto mt-16 grid max-w-5xl gap-10 lg:grid-cols-2"
-          >
-            {features.map((feature) => (
-              <div
-                key={feature.name}
-                className="relative pl-16"
-              >
-                <div
-                  className="absolute left-0 top-0 flex size-10 items-center justify-center rounded-lg bg-[#F78211]"
-                >
-                  <feature.icon className="size-6 text-white" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-900">{feature.name}</h3>
-                <p className="mt-2 text-base leading-7 text-gray-500">{feature.description}</p>
-              </div>
-            ))}
+          <div className={s.heroVisual}>
+            <div className={s.photoFrame}><Image src="/img/affiliate-home.png" alt="Una persona consulta el panel de Afilink en su celular, con comisiones y una venta confirmada" width={1122} height={1402} priority sizes="(max-width: 700px) 100vw, 50vw" className={s.heroPhoto} /></div>
+            <div className={s.linkTag}><span className={s.linkSymbol} aria-hidden="true">↗</span><div><span className={s.label}>TU ENLACE DE AFILIADO</span><strong>Lo compartís vos.</strong></div></div>
+            <div className={s.commissionCard}><span className={s.commissionIcon} aria-hidden="true">$</span><div><span className={s.label}>POR CADA VENTA CONFIRMADA</span><strong>Una comisión para vos.</strong><p>Cuando compran desde tu enlace.</p></div></div>
+            <span className={s.visualCaption}>Tus recomendaciones pueden generar ingresos.</span>
           </div>
         </section>
-
-        
-        <section className="py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div
-              className="mx-auto max-w-3xl text-center"
-            >
-              <h2 className="text-base font-semibold text-[#F78211]">Elegí tu rol</h2>
-              <p className="mt-2 text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                Una plataforma para empresas aprobadas y afiliados
-              </p>
-            </div>
-
-            <div
-              className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-2"
-            >
-              {roles.map((role) => (
-                <motion.div
-                  key={role.name}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className={`rounded-3xl bg-white p-8 shadow-sm transition-shadow hover:shadow-md ${
-                    role.highlighted
-                      ? "ring-2 ring-[#F78211]"
-                      : "ring-1 ring-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-semibold text-gray-900">{role.name}</h3>
-                    {role.highlighted && (
-                      <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-[#E89C51]">
-                        Popular
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-4 text-sm leading-6 text-gray-500">{role.description}</p>
-
-                  <ul className="mt-8 space-y-3 text-sm text-gray-600">
-                    {role.features.map((feature) => (
-                      <li key={feature} className="flex gap-x-3">
-                        <CheckIcon className="h-6 w-5 flex-none text-[#F78211]" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href={role.name === "Para vendedores" ? "/contacto?tipo=empresa" : "/register"}
-                    className="mt-8 block rounded-md bg-[#F78211] px-3 py-2 text-center text-sm font-semibold text-white hover:bg-[#d98b3f]"
-                  >
-                    {role.name === "Para vendedores" ? "Solicitar cuenta empresa" : "Empezar ahora"}
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+        <section className={`${s.how} ${s.section} ${s.wrap}`} id="como-funciona" aria-labelledby="how-title">
+          <div className={s.sectionHeading}><p className={s.eyebrow}>ASÍ FUNCIONA</p><h2 id="how-title">Vos recomendás.<br /><span>Afilink conecta la venta.</span></h2><p>El producto ya existe. Tu parte es acercarlo a personas a las que les pueda servir.</p></div>
+          <div className={s.steps}>{steps.map(([title, description], i) => <article className={s.step} key={title}><span className={s.stepNumber}>0{i + 1}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
         </section>
-
-        <section id="faq" className="mx-auto max-w-7xl px-6 pb-24 lg:px-8">
-          <h2
-            className="text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl"
-          >
-            Preguntas frecuentes
-          </h2>
-
-          <dl
-            className="mt-16 divide-y divide-gray-900/10"
-          >
-            {faqs.map((faq) => (
-              <div
-                key={faq.question}
-                className="py-8 lg:grid lg:grid-cols-12 lg:gap-8"
-              >
-                <dt className="text-base font-semibold text-gray-900 lg:col-span-5">
-                  {faq.question}
-                </dt>
-                <dd className="mt-4 lg:col-span-7 lg:mt-0">
-                  <p className="text-base leading-7 text-gray-500">{faq.answer}</p>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        <section className="px-6 pb-24 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            variants={softReveal}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            viewport={viewportOnce}
-            className="mx-auto max-w-3xl rounded-3xl bg-gray-950 px-6 py-16 text-center shadow-xl sm:px-12"
-          >
-            <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              Empezá a generar comisiones hoy
-            </h2>
-            <p className="mx-auto mt-6 max-w-xl text-lg text-gray-300">
-              Afilink te da una forma simple de conectar productos digitales aprobados con personas que pueden ayudar a promocionarlos.
-            </p>
-
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/register"
-                className="rounded-md bg-[#F78211] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#d98b3f]"
-              >
-                Únete ahora
-              </Link>
-
-              <Link href="/login" className="text-sm font-semibold text-white">
-                Iniciar sesión <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </motion.div>
-        </section>
+        <section className={`${s.catalog} ${s.section}`} id="beneficios" aria-labelledby="catalog-title"><div className={s.wrap}>
+          <div className={s.catalogHeading}><div><p className={s.eyebrow}>PRODUCTOS REALES PARA RECOMENDAR</p><h2 id="catalog-title">Encontrá tu próximo<br />producto para compartir.</h2></div><p>Cursos y ebooks que podés conocer<br />antes de recomendar.</p></div>
+          <div className={s.products}>{products.map(product => <article className={s.product} key={product.title}><div className={`${s.productArt} ${s[product.art]}`}><span>{product.label}</span><b>{product.name}{product.art === "canva" ? <span className={s.artDot}>.</span> : product.art === "capcut" ? <span className={s.outline}> ADS</span> : <><br />en Canva</>}</b><span>{product.tagline}</span></div><div className={s.productInfo}><p className={s.productType}>{product.type}</p><h3>{product.title}</h3><p>{product.description}</p></div></article>)}</div>
+          <Link className={s.textLink} href="/products">Explorar el catálogo de Afilink <span aria-hidden="true">↗</span></Link>
+        </div></section>
+        <section className={`${s.faq} ${s.section} ${s.wrap}`} id="faq" aria-labelledby="faq-title"><div><p className={s.eyebrow}>ANTES DE EMPEZAR</p><h2 id="faq-title">Tus dudas,<br />resueltas.</h2><p>No necesitás tener un producto propio para ser afiliado.</p></div><div className={s.questions}>
+          {faqs.map(([question, answer], i) => <details key={question} open={i === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}
+        </div></section>
+        <section className={`${s.closing} ${s.wrap}`}><div><p className={s.eyebrow}>TU PRÓXIMO PASO</p><h2>Empezá por tu<br /><span>cuenta gratis.</span></h2><p>Elegí qué recomendar. Compartí tu enlace.<br />Ganá una comisión por cada venta confirmada.</p></div><div className={s.closingAction}><RegisterLink>Quiero ser afiliado</RegisterLink><span>Registrarte es gratis.</span></div></section>
       </main>
-
     </div>
   );
 }
