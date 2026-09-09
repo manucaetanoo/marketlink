@@ -8,6 +8,7 @@ import {
   SettlementStatus,
 } from "@/lib/prisma-enums";
 import {
+  type Prisma,
   type User,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -63,57 +64,32 @@ export async function getAvailablePayoutAmount(
   userId: string,
   kind: PayoutRequestKind
 ) {
-  if (kind === PayoutRequestKind.SELLER) {
-    const result = await prisma.settlement.aggregate({
-      where: {
-        sellerId: userId,
-        status: SettlementStatus.AVAILABLE,
-        fulfillmentStatus: FulfillmentStatus.DELIVERED,
-      },
-      _sum: {
-        netAmount: true,
-      },
-    });
+  return (await getPayoutSnapshot(prisma, userId, kind)).amount;
+}
 
-    return result._sum.netAmount ?? 0;
-  }
-
-  const commissions = await prisma.commission.findMany({
-    where: {
-      affiliateId: userId,
-      status: CommissionStatus.APPROVED,
-    },
-    select: {
-      amount: true,
-      orderItem: {
-        select: {
-          sellerId: true,
-        },
-      },
-      order: {
-        select: {
-          settlements: {
-            select: {
-              sellerId: true,
-              status: true,
-              fulfillmentStatus: true,
-            },
-          },
-        },
-      },
-    },
+export async function getPayoutSnapshot(db: Prisma.TransactionClient, userId: string, kind: PayoutRequestKind) {
+  const pending = await db.payoutRequest.findMany({
+    where: { requesterId: userId, kind, status: PayoutRequestStatus.PENDING },
+    select: { commissionIds: true, settlementIds: true },
   });
-
-  return commissions
-    .filter((commission) =>
-      commission.order.settlements.some(
-        (settlement) =>
-          settlement.sellerId === commission.orderItem?.sellerId &&
-          settlement.status === SettlementStatus.AVAILABLE &&
-          settlement.fulfillmentStatus === FulfillmentStatus.DELIVERED
-      )
-    )
-    .reduce((total, commission) => total + commission.amount, 0);
+  // An old request has no reliable allocation. An admin must reconcile/cancel it first.
+  if (pending.some(request => !request.commissionIds.length && !request.settlementIds.length)) {
+    return { amount: 0, commissionIds: [] as string[], settlementIds: [] as string[] };
+  }
+  if (kind === PayoutRequestKind.SELLER) {
+    const settlements = await db.settlement.findMany({
+      where: { sellerId: userId, status: SettlementStatus.AVAILABLE, fulfillmentStatus: FulfillmentStatus.DELIVERED,
+        id: { notIn: pending.flatMap(request => request.settlementIds) }, order: { status: "PAID" } },
+      select: { id: true, netAmount: true },
+    });
+    return { amount: settlements.reduce((sum, row) => sum + row.netAmount, 0), settlementIds: settlements.map(row => row.id), commissionIds: [] as string[] };
+  }
+  const commissions = await db.commission.findMany({
+    where: { affiliateId: userId, status: CommissionStatus.APPROVED, order: { status: "PAID" },
+      id: { notIn: pending.flatMap(request => request.commissionIds) } },
+    select: { id: true, amount: true },
+  });
+  return { amount: commissions.reduce((sum, row) => sum + row.amount, 0), commissionIds: commissions.map(row => row.id), settlementIds: [] as string[] };
 }
 
 export function getPayoutKindForRole(role: Role) {

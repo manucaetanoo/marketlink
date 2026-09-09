@@ -18,10 +18,12 @@ function encodeCheckoutItems(items: CheckoutItem[]) {
 async function createClickFromRef({
   productId,
   refCode,
+  cookieClickId,
   req,
 }: {
   productId: string;
   refCode?: string;
+  cookieClickId?: string;
   req: Request;
 }) {
   if (!refCode) return null;
@@ -32,6 +34,11 @@ async function createClickFromRef({
   });
 
   if (!link || link.productId !== productId) return null;
+
+  if (cookieClickId) {
+    const existing = await prisma.click.findUnique({ where: { id: cookieClickId }, select: { linkId: true } });
+    if (existing?.linkId === link.id) return cookieClickId;
+  }
 
   const xff = req.headers.get("x-forwarded-for");
   const ip = xff ? xff.split(",")[0].trim() : null;
@@ -81,14 +88,13 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies();
 
-    const clickId =
-      cookieStore.get("aff_click_id")?.value ||
-      (productId
-        ? await createClickFromRef({ productId, refCode, req })
-        : null);
-        
-    const campaignClickId =
-      cookieStore.get("aff_campaign_click_id")?.value;
+    const cookieClickId = cookieStore.get("aff_click_id")?.value;
+    const explicitClickId = await createClickFromRef({ productId, refCode, cookieClickId, req });
+    const cookieClick = !explicitClickId && cookieClickId
+      ? await prisma.click.findUnique({ where: { id: cookieClickId }, select: { link: { select: { productId: true } } } })
+      : null;
+    const clickId = explicitClickId || (cookieClick?.link.productId === productId ? cookieClickId : undefined);
+    const campaignClickId = explicitClickId ? undefined : cookieStore.get("aff_campaign_click_id")?.value;
 
     return NextResponse.json(
       {

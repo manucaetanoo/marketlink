@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { calculateSplit } from "@/lib/payments/calculateSplit";
-import { getCheckoutTotalWithTax } from "@/lib/taxes";
 import { type Prisma } from "@prisma/client";
 import {
   OrderStatus,
@@ -197,12 +196,11 @@ async function resolveCheckoutItems(items: CheckoutItemInput[]) {
 export async function getCheckoutDraft(items: CheckoutItemInput[]) {
   const resolvedItems = await resolveCheckoutItems(items);
   const subtotal = resolvedItems.reduce((sum, item) => sum + item.total, 0);
-  const { total, taxAmount } = getCheckoutTotalWithTax(subtotal);
+  const total = subtotal;
 
   return {
     total,
     subtotal,
-    taxAmount,
     items: resolvedItems,
   };
 }

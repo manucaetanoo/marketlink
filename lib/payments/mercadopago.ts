@@ -1,5 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "crypto";
-import { type Prisma } from "@prisma/client";
+import { financialTransaction } from "@/lib/financial-transaction";
 import {
   CommissionStatus,
   OrderStatus,
@@ -13,6 +13,7 @@ type MercadoPagoPaymentResponse = {
   status?: string;
   status_detail?: string;
   external_reference?: string;
+  currency_id?: string;
   transaction_amount?: number;
   payer?: {
     email?: string;
@@ -401,44 +402,35 @@ export async function syncOrderWithMercadoPagoPayment(
     return null;
   }
 
+  const expected = await prisma.order.findUnique({ where: { id: orderId }, select: { total: true } });
+  if (!expected) throw new Error("Orden no encontrada");
+  if (typeof payment.transaction_amount !== "number" || !Number.isFinite(payment.transaction_amount) ||
+      Math.round(payment.transaction_amount * 100) !== Math.round(expected.total * 100) ||
+      payment.currency_id !== (process.env.MERCADOPAGO_CURRENCY || "UYU")) {
+    throw new Error("El importe o la moneda del pago no coincide con la orden");
+  }
+
   if (isApprovedMercadoPagoStatus(payment.status)) {
-    await markOrderPaidAndNotify({
-      orderId,
-      buyerEmail: payment.payer?.email ?? null,
-      paymentId: String(payment.id),
-      paymentProvider: "mercadopago",
-      paymentStatus: payment.status,
-    });
-  } else if (isCanceledMercadoPagoStatus(payment.status)) {
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: OrderStatus.CANCELED,
-          paymentId: String(payment.id),
-          paymentProvider: "mercadopago",
-          paymentStatus: payment.status,
-        },
-      });
-
-      await tx.commission.updateMany({
-        where: { orderId },
-        data: { status: CommissionStatus.CANCELED },
-      });
-
-      await tx.settlement.updateMany({
-        where: { orderId },
-        data: { status: SettlementStatus.CANCELED },
-      });
-    });
+    await markOrderPaidAndNotify({ orderId, buyerEmail: payment.payer?.email ?? null,
+      paymentId: String(payment.id), paymentProvider: "mercadopago", paymentStatus: payment.status });
   } else {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentId: String(payment.id),
-        paymentProvider: "mercadopago",
-        paymentStatus: payment.status ?? "pending",
-      },
+    await financialTransaction(async tx => {
+      const order = await tx.order.findUnique({ where: { id: orderId } });
+      if (!order) throw new Error("Orden no encontrada");
+      const reversal = payment.status === "refunded" || payment.status === "charged_back";
+      // A failed/late attempt must never undo a different successful payment.
+      if (order.status === OrderStatus.PAID && (!reversal || order.paymentId !== String(payment.id))) return;
+      if (["refunded", "charged_back", "canceled"].includes(order.paymentStatus?.toLowerCase() ?? "")) return;
+      const canceled = isCanceledMercadoPagoStatus(payment.status);
+      await tx.order.update({ where: { id: orderId }, data: {
+        ...(canceled ? { status: OrderStatus.CANCELED } : {}),
+        paymentId: String(payment.id), paymentProvider: "mercadopago", paymentStatus: payment.status ?? "pending",
+      } });
+      if (canceled) {
+        // Keep already transferred earnings in the audit history after a refund.
+        await tx.commission.updateMany({ where: { orderId, status: { not: CommissionStatus.PAID } }, data: { status: CommissionStatus.CANCELED } });
+        await tx.settlement.updateMany({ where: { orderId, status: { not: SettlementStatus.PAID } }, data: { status: SettlementStatus.CANCELED } });
+      }
     });
   }
 

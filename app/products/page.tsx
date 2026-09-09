@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import type { Metadata } from "next";
 import ProductsCatalogClient from "@/components/ProductsCatalogClient";
+import ProductsHero from "@/components/ProductsHero";
 import { getRenderableProductImageUrls } from "@/lib/product-images";
 
 
@@ -60,30 +61,15 @@ export default async function ProductsPage() {
   const { products, hasMore, total } = await getActiveProducts();
 
   return (
-    <div className="min-h-screen bg-[#fffaf6] text-slate-900">
+    <div className="min-h-screen bg-white text-[#181917]">
       <Navbar />
 
       <div className="flex min-h-screen pt-15">
         <Sidebar />
 
-        <main className="relative flex-1 overflow-hidden">
-          <div className="absolute inset-x-0 top-0 -z-10 h-[420px] bg-gradient-to-b from-orange-100/70 via-white to-transparent" />
-          <div className="absolute left-[-120px] top-28 -z-10 h-72 w-72 rounded-full bg-orange-200/40 blur-3xl" />
-          <div className="absolute right-[-100px] top-40 -z-10 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
-
-          <div className="mx-auto max-w-full px-4 py-10 sm:px-6 lg:px-8">
-            <div className="py-12 text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">
-                Catalogo de productos
-              </p>
-              <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-                Productos digitales
-              </h1>
-              <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-slate-600">
-                Explorá productos disponibles, revisá los detalles y comprá desde un
-                checkout seguro.
-              </p>
-            </div>
+        <main className="relative min-w-0 flex-1">
+          <div className="mx-auto max-w-[1440px] px-5 pb-12 sm:px-8 lg:px-10">
+            <ProductsHero />
 
             <ProductsCatalogClient
               products={products}

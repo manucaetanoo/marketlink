@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getMercadoPagoPublicConfig } from "@/lib/payments/mercadopago";
 import { prisma } from "@/lib/prisma";
-import { getCheckoutTotalWithTax } from "@/lib/taxes";
 import MercadoPagoCheckoutClient from "./[orderId]/MercadoPagoCheckoutClient";
 
 type DraftCheckoutItem = {
@@ -91,7 +90,7 @@ export default async function DraftCheckoutPage({
     };
   });
   const subtotal = checkoutItems.reduce((sum, item) => sum + item.total, 0);
-  const { total, taxAmount } = getCheckoutTotalWithTax(subtotal);
+  const total = subtotal;
   const mercadoPagoConfig = getMercadoPagoPublicConfig();
 
   return (
@@ -102,7 +101,6 @@ export default async function DraftCheckoutPage({
             id: "pendiente",
             total,
             subtotal,
-            taxAmount,
             status: "DRAFT",
             paymentStatus: null,
             shipping: {

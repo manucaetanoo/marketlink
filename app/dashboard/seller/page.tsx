@@ -1,741 +1,137 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import {
-  FiBarChart2,
-  FiBox,
-  FiCheckCircle,
-  FiClock,
-  FiDollarSign,
-  FiPackage,
-  FiPlus,
-  FiShoppingCart,
-  FiTrendingUp,
-  FiUsers,
-} from "react-icons/fi";
+import { DM_Sans, Manrope } from "next/font/google";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import Navbar from "@/components/Navbar";
-import PayoutRequestButton from "@/components/PayoutRequestButton";
 import Sidebar from "@/components/Sidebar";
+import PayoutRequestButton from "@/components/PayoutRequestButton";
+import DashboardActivity from "@/components/affiliate/DashboardActivity";
+import DashboardPeriodPicker from "@/components/affiliate/DashboardPeriodPicker";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getAvailablePayoutAmount, getMissingPayoutFields } from "@/lib/payouts";
+import { getDashboardPeriod, inDashboardPeriod, salesComparison } from "@/lib/affiliate-dashboard";
+import s from "../affiliate/dashboard.module.css";
 
-function money(value: number) {
-  return new Intl.NumberFormat("es-UY", {
-    style: "currency",
-    currency: "UYU",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+const bodyFont = DM_Sans({ subsets: ["latin"], variable: "--dashboard-body" });
+const headingFont = Manrope({ subsets: ["latin"], variable: "--dashboard-heading" });
+const money = (value: number) => new Intl.NumberFormat("es-UY", { style: "currency", currency: "UYU", maximumFractionDigits: 0 }).format(value);
+const date = (value: Date) => new Intl.DateTimeFormat("es-UY", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Montevideo" }).format(value);
+const paymentLabels: Record<string, string> = { PENDING: "Solicitado", PAID: "Pagado", CANCELED: "Cancelado" };
 
-function number(value: number) {
-  return new Intl.NumberFormat("es-UY").format(value);
-}
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("es-UY", {
-    day: "2-digit",
-    month: "short",
-  }).format(date);
-}
-
-const PAYMENT_ACCREDITATION_DAYS = 7;
-
-function addDays(date: Date, days: number) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
-  return nextDate;
-}
-
-function formatPaymentDate(date: Date) {
-  const parts = new Intl.DateTimeFormat("es-UY", {
-    day: "numeric",
-    month: "long",
-  }).formatToParts(date);
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-
-  return `${day} ${month}`.trim();
-}
-
-function delta(current: number, previous: number) {
-  if (previous === 0) return current > 0 ? "+100%" : "0%";
-  const change = ((current - previous) / previous) * 100;
-  return `${change >= 0 ? "+" : ""}${change.toFixed(0)}%`;
-}
-
-function statusClasses(status: string) {
-  if (
-    status === "PAID" ||
-    status === "AVAILABLE" ||
-    status === "DELIVERED"
-  ) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (status === "PREPARING") {
-    return "border-sky-200 bg-sky-50 text-sky-700";
-  }
-
-  if (status === "DELIVERY_REQUESTED") {
-    return "border-violet-200 bg-violet-50 text-violet-700";
-  }
-
-  if (status === "CANCELED") {
-    return "border-rose-200 bg-rose-50 text-rose-700";
-  }
-
-  return "border-amber-200 bg-amber-50 text-amber-700";
-}
-
-function statusLabel(status: string) {
-  const labels: Record<string, string> = {
-    AVAILABLE: "Disponible",
-    CANCELED: "Cancelada",
-    DELIVERY_REQUESTED: "Acceso por revisar",
-    PAID: "Pagada",
-    PENDING: "Pendiente",
-  };
-
-  return labels[status] ?? status;
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  detail,
-  tone = "slate",
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  tone?: "slate" | "orange" | "emerald" | "violet";
-}) {
-  const tones = {
-    slate: "bg-slate-900 text-white",
-    orange: "bg-orange-500 text-white",
-    emerald: "bg-emerald-500 text-white",
-    violet: "bg-violet-500 text-white",
-  };
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-            {value}
-          </p>
-        </div>
-        <div className={`rounded-lg p-2.5 ${tones[tone]}`}>{icon}</div>
-      </div>
-      <p className="mt-4 text-sm text-slate-500">{detail}</p>
-    </div>
-  );
-}
-
-function ProductBar({
-  label,
-  value,
-  max,
-  detail,
-}: {
-  label: string;
-  value: number;
-  max: number;
-  detail: string;
-}) {
-  const width = max > 0 ? Math.max((value / max) * 100, value > 0 ? 8 : 0) : 0;
-
-  return (
-    <div>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-800">{label}</p>
-          <p className="mt-0.5 text-xs text-slate-500">{detail}</p>
-        </div>
-        <span className="text-sm font-semibold text-slate-900">{money(value)}</span>
-      </div>
-      <div className="h-2 rounded-full bg-slate-100">
-        <div
-          className="h-2 rounded-full bg-orange-500"
-          style={{ width: `${width}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function PaymentAvailabilityMeta({
-  saleDate,
-  grossAmount,
-}: {
-  saleDate: Date;
-  grossAmount: number;
-}) {
-  const availableAt = addDays(saleDate, PAYMENT_ACCREDITATION_DAYS);
-
-  return (
-    <div className="mt-2 space-y-1 text-xs leading-5 text-slate-500">
-      <p>
-        <span className="font-medium text-slate-700">Venta:</span>{" "}
-        {formatPaymentDate(saleDate)}
-      </p>
-      <p>
-        <span className="font-medium text-slate-700">Disponible el:</span>{" "}
-        {formatPaymentDate(availableAt)}
-      </p>
-      <p>Bruto {money(grossAmount)}</p>
-    </div>
-  );
-}
-
-const DASHBOARD_PRODUCTS_LIMIT = 100;
-const DASHBOARD_RECENT_ITEMS_LIMIT = 80;
-const DASHBOARD_RECENT_SETTLEMENTS_LIMIT = 80;
-
-export default async function SellerDashboardPage() {
+export default async function SellerDashboardPage({ searchParams }: { searchParams: Promise<{ period?: string | string[] }> }) {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "SELLER") {
-    redirect("/dashboard/affiliate");
-  }
-
+  if (!session?.user?.id) redirect("/login");
+  if (session.user.role !== "SELLER") redirect("/dashboard/affiliate");
   const sellerId = session.user.id;
-  const now = new Date();
-  const currentStart = new Date(now);
-  currentStart.setDate(currentStart.getDate() - 30);
-  const previousStart = new Date(now);
-  previousStart.setDate(previousStart.getDate() - 60);
-
-  const [
-    products,
-    orderItems,
-    settlements,
-    productLinks,
-    pendingPayoutRequest,
-  ] =
-    await Promise.all([
-      prisma.product.findMany({
-        where: { sellerId },
-        select: {
-          id: true,
-          name: true,
-          price: true,
-          isActive: true,
-          commissionValue: true,
-          commissionType: true,
-          createdAt: true,
-          _count: { select: { links: true, orders: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: DASHBOARD_PRODUCTS_LIMIT,
-      }),
-      prisma.orderItem.findMany({
-        where: { sellerId },
-        select: {
-          id: true,
-          total: true,
-          sellerAmount: true,
-          affiliateAmount: true,
-          platformAmount: true,
-          createdAt: true,
-          product: { select: { id: true, name: true } },
-          affiliate: { select: { id: true, name: true, email: true } },
-          order: { select: { id: true, status: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: DASHBOARD_RECENT_ITEMS_LIMIT,
-      }),
-      prisma.settlement.findMany({
-        where: {
-          sellerId,
-          order: {
-            status: "PAID",
-          },
-        },
-        select: {
-          id: true,
-          grossAmount: true,
-          platformFee: true,
-          affiliateFee: true,
-          netAmount: true,
-          status: true,
-          fulfillmentStatus: true,
-          createdAt: true,
-          order: {
-            select: {
-              id: true,
-              status: true,
-              buyerName: true,
-              buyerEmail: true,
-              buyerPhone: true,
-              items: {
-                where: { sellerId },
-                select: {
-                  quantity: true,
-                  product: { select: { name: true } },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: DASHBOARD_RECENT_SETTLEMENTS_LIMIT,
-      }),
-      prisma.affiliateLink.findMany({
-        where: { product: { sellerId } },
-        select: {
-          id: true,
-          affiliateId: true,
-          productId: true,
-          _count: { select: { clicks: true } },
-        },
-      }),
-      prisma.payoutRequest.findFirst({
-        where: {
-          requesterId: sellerId,
-          kind: "SELLER",
-          status: "PENDING",
-        },
-        select: {
-          id: true,
-        },
-      }),
-    ]);
-
-  const paidItems = orderItems.filter((item) => item.order.status === "PAID");
-  const paidSellerOrders = settlements.filter(
-    (settlement) => settlement.status !== "CANCELED"
-  );
-  const currentSellerOrders = paidSellerOrders.filter(
-    (settlement) => settlement.createdAt >= currentStart
-  );
-  const previousSellerOrders = paidSellerOrders.filter(
-    (settlement) =>
-      settlement.createdAt >= previousStart && settlement.createdAt < currentStart
-  );
-  const currentItems = paidItems.filter((item) => item.createdAt >= currentStart);
-  const previousItems = paidItems.filter(
-    (item) => item.createdAt >= previousStart && item.createdAt < currentStart
-  );
-  const grossRevenue = paidItems.reduce((total, item) => total + item.total, 0);
-  const currentGrossRevenue = currentItems.reduce(
-    (total, item) => total + item.total,
-    0
-  );
-  const previousGrossRevenue = previousItems.reduce(
-    (total, item) => total + item.total,
-    0
-  );
-  const netRevenue = paidItems.reduce(
-    (total, item) => total + item.sellerAmount,
-    0
-  );
-  const availableSettlement = settlements
-    .filter((settlement) => settlement.status === "AVAILABLE")
-    .reduce((total, settlement) => total + settlement.netAmount, 0);
-  const paidSettlement = settlements
-    .filter((settlement) => settlement.status === "PAID")
-    .reduce((total, settlement) => total + settlement.netAmount, 0);
-  const totalClicks = productLinks.reduce((total, link) => total + link._count.clicks, 0);
-  const activeProducts = products.filter((product) => product.isActive).length;
-  const activeAffiliates = new Set([
-    ...productLinks.map((link) => link.affiliateId),
-    ...orderItems
-      .map((item) => item.affiliate?.id ?? null)
-      .filter((id): id is string => Boolean(id)),
-  ]).size;
-  const averageOrder =
-    paidSellerOrders.length > 0 ? grossRevenue / paidSellerOrders.length : 0;
-  const platformFees = paidItems.reduce(
-    (total, item) => total + item.platformAmount,
-    0
-  );
-  const affiliateFees = paidItems.reduce(
-    (total, item) => total + item.affiliateAmount,
-    0
-  );
-
-  const productStats = products
-    .map((product) => {
-      const productOrders = paidItems.filter(
-        (item) => item.product.id === product.id
-      );
-      const revenue = productOrders.reduce((total, item) => total + item.total, 0);
-      const clicks = productLinks
-        .filter((link) => link.productId === product.id)
-        .reduce((total, link) => total + link._count.clicks, 0);
-
-      return {
-        id: product.id,
-        name: product.name,
-        revenue,
-        orders: productOrders.length,
-        clicks,
-        active: product.isActive,
-      };
-    })
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5);
-
-  const maxProductRevenue = Math.max(
-    ...productStats.map((product) => product.revenue),
-    0
-  );
-  const recentSettlements = settlements;
+  const period = getDashboardPeriod((await searchParams).period);
+  const currentDates = { ...(period.start ? { gte: period.start } : {}), lte: period.end };
+  const historyDates = { ...(period.previousStart ? { gte: period.previousStart } : {}), lte: period.end };
+  // Period metrics are complete; withdrawable balances always use the payout endpoint's rules.
+  const [products, settlements, productLinks, requests, available, paidTotal, payoutUser] = await Promise.all([
+    prisma.product.findMany({ where: { sellerId }, orderBy: { createdAt: "desc" }, select: { id: true, name: true, price: true, isActive: true } }),
+    prisma.settlement.findMany({
+      where: { sellerId, order: { status: "PAID", createdAt: historyDates }, status: { not: "CANCELED" } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, grossAmount: true, netAmount: true, platformFee: true, affiliateFee: true, status: true, fulfillmentStatus: true,
+        order: { select: { id: true, createdAt: true, buyerName: true, buyerEmail: true, buyerPhone: true,
+          items: { where: { sellerId }, select: { total: true, quantity: true, affiliateId: true, product: { select: { id: true, name: true } } } } } },
+      },
+    }),
+    prisma.affiliateLink.findMany({ where: { product: { sellerId } }, select: { affiliateId: true, productId: true, _count: { select: { clicks: { where: { createdAt: currentDates } } } } } }),
+    prisma.payoutRequest.findMany({ where: { requesterId: sellerId, kind: "SELLER" }, orderBy: { requestedAt: "desc" }, select: { id: true, amount: true, status: true, requestedAt: true, paidAt: true, settlementIds: true } }),
+    getAvailablePayoutAmount(sellerId, "SELLER"),
+    prisma.settlement.aggregate({ where: { sellerId, status: "PAID" }, _sum: { netAmount: true } }),
+    prisma.user.findUnique({ where: { id: sellerId }, select: { payoutMethod: true, payoutHolderName: true, payoutDocumentType: true, payoutDocumentNumber: true, payoutEmail: true, payoutPhone: true, payoutCountry: true, payoutCurrency: true, bankName: true, bankAccountType: true, bankAccountNumber: true, bankAccountAlias: true } }),
+  ]);
+  const current = settlements.filter(row => inDashboardPeriod(row.order.createdAt, period));
+  const previous = settlements.filter(row => inDashboardPeriod(row.order.createdAt, period, true));
+  const pendingRequests = requests.filter(row => row.status === "PENDING");
+  const requestedAmount = pendingRequests.reduce((sum, row) => sum + row.amount, 0);
+  const reservedIds = new Set(pendingRequests.flatMap(row => row.settlementIds));
+  const legacyRequest = pendingRequests.some(row => !row.settlementIds.length);
+  const missing = payoutUser ? getMissingPayoutFields(payoutUser) : ["perfil de cobro"];
+  const gross = current.reduce((sum, row) => sum + row.grossAmount, 0);
+  const net = current.reduce((sum, row) => sum + row.netAmount, 0);
+  const clicks = productLinks.reduce((sum, row) => sum + row._count.clicks, 0);
+  const affiliatesWithSales = new Set(current.flatMap(row => row.order.items.map(item => item.affiliateId).filter(Boolean))).size;
+  const productStats = products.map(product => {
+    const sales = current.filter(row => row.order.items.some(item => item.product.id === product.id));
+    return { ...product, revenue: sales.reduce((sum, row) => sum + row.order.items.filter(item => item.product.id === product.id).reduce((total, item) => total + item.total, 0), 0), sales: sales.length };
+  }).sort((a, b) => b.revenue - a.revenue);
+  const metric = (label: string, value: string, detail: string) => <div className={s.metric}><p>{label}</p><strong>{value}</strong><span>{detail}</span></div>;
+  const periodDates = period.start ? `${date(period.start)} — ${date(period.end)}` : `Hasta el ${date(period.end)}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
+    <div className={`${bodyFont.variable} ${headingFont.variable}`}>
       <Navbar />
+      <div className="flex min-h-screen bg-white pt-16">
+        <Sidebar />
+        <main className={s.main}><div className={s.wrap}>
+          <header className={s.header}>
+            <div><p className={s.eyebrow}>TU ESPACIO DE VENDEDOR</p><h1>Tus productos. Tus resultados.</h1><p>Gestioná tus productos, seguí tus ventas y organizá tus cobros.</p></div>
+            <Link href="/seller/products/new" className={s.primary}>Crear producto<ArrowRightIcon aria-hidden="true" /></Link>
+          </header>
+          <nav aria-label="Secciones del dashboard" className={s.mobileNav}><a href="#products">Productos</a><a href="#orders">Ventas</a><a href="#affiliates">Afiliados</a><a href="#payments">Cobros</a></nav>
 
-        <div className="flex min-h-[calc(100vh-4rem)] pt-16">
-          <Sidebar />
-
-          <main className="min-w-0 flex-1">
-            <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-                  Dashboard seller
-                </p>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                  Control comercial de tu tienda
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Ventas, productos, afiliados y liquidaciones en una
-                  vista lista para operar.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <PayoutRequestButton
-                  disabled={availableSettlement <= 0}
-                  pending={Boolean(pendingPayoutRequest)}
-                />
-                <Link
-                  href="/seller/products/new"
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  <FiPlus />
-                  Crear producto
-                </Link>
+          <section className={s.balances} aria-labelledby="balance-heading">
+            <div className={s.available}>
+              <div><h2 id="balance-heading">Disponible para cobrar</h2><p className={s.balanceAmount}>{money(available)} <span>UYU</span></p><p>Saldo neto habilitado para cobro, descontando comisiones y solicitudes en proceso.</p></div>
+              <div className={s.payoutAction}>
+                {legacyRequest ? <p className={s.small}>Hay una solicitud del sistema anterior que necesita revisión del administrador para liberar nuevos cobros.</p> : missing.length > 0 ? <><Link href="/perfil/config#datos-de-cobro" className={s.secondary}>Completá tus datos para cobrar<ArrowRightIcon aria-hidden="true" /></Link><p className={s.small}>Falta completar: {missing.join(", ")}.</p></> : <><PayoutRequestButton disabled={available <= 0} pending={false} idleLabel="Solicitar cobro" pendingLabel="Cobro solicitado" />{available <= 0 && <p className={s.small}>El botón se habilita cuando tengas saldo disponible.</p>}</>}
               </div>
             </div>
+            <div className={s.otherBalances}>
+              <div className={s.metric}><p>Cobros en proceso</p><strong>{money(requestedAmount)}</strong><span>{pendingRequests.length > 0 ? "Solicitado para transferir a tu cuenta." : "No tenés cobros en proceso."}</span>{pendingRequests.length > 0 && <a href="#payments" className={s.textLink}>Ver detalle de cobros<ArrowRightIcon aria-hidden="true" /></a>}</div>
+              {metric("Ya cobrado", money(paidTotal._sum.netAmount ?? 0), "Ingresos liquidados de todo tu historial.")}
+            </div>
+            <p className={s.balanceScope}>Tus saldos y solicitudes de cobro no cambian con el filtro de tiempo. Todos los importes están en pesos uruguayos (UYU).</p>
+          </section>
 
-            <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard
-                icon={<FiDollarSign />}
-                label="Ventas brutas"
-                value={money(grossRevenue)}
-                detail={`${delta(currentGrossRevenue, previousGrossRevenue)} vs. 30 dias previos`}
-                tone="orange"
-              />
-              <StatCard
-                icon={<FiCheckCircle />}
-                label="Ingreso neto"
-                value={money(netRevenue)}
-                detail={`${money(platformFees)} plataforma, ${money(affiliateFees)} afiliados`}
-                tone="emerald"
-              />
-              <StatCard
-                icon={<FiShoppingCart />}
-                label="Ventas digitales"
-                value={number(paidSellerOrders.length)}
-                detail={`${delta(currentSellerOrders.length, previousSellerOrders.length)} vs. periodo anterior`}
-                tone="slate"
-              />
-              <StatCard
-                icon={<FiClock />}
-                label="Por liquidar"
-                value={money(availableSettlement)}
-                detail={`Disponible para retirar. ${money(paidSettlement)} ya retirado`}
-                tone="violet"
-              />
-            </section>
+          <div className={s.periodBar}><DashboardPeriodPicker value={period.value} /><p id="period-scope">{periodDates}. El filtro se aplica a las ventas, ingresos, clics y rendimiento de productos. Tu catálogo sigue visible.</p></div>
 
-            <section
-              id="affiliates"
-              className="mt-6 grid scroll-mt-24 grid-cols-1 gap-4 lg:grid-cols-4"
-            >
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-500">Productos activos</p>
-                  <FiPackage className="text-orange-500" />
-                </div>
-                <p className="mt-3 text-2xl font-semibold">{number(activeProducts)}</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {number(products.length)} productos creados
-                </p>
-              </div>
+          <section id="products" className={s.section} aria-labelledby="products-heading">
+            <div className={s.sectionHeading}><div><h2 id="products-heading">Mis productos</h2><p>{products.filter(product => product.isActive).length} activos · {products.length} productos en tu catálogo</p></div><Link href="/seller/products" className={s.textLink}>Administrar productos<ArrowRightIcon aria-hidden="true" /></Link></div>
+            <div className={s.panel}><DashboardActivity key={`products-${period.value}`} empty="Todavía no creaste productos. Publicá el primero para empezar a vender." items={productStats.map(product => ({ id: product.id, title: product.name, detail: `${product.sales} ventas · ${money(product.revenue)} facturados en el período`, amount: money(product.price), status: product.isActive ? "APPROVED" : "PENDING", label: product.isActive ? "Activo" : "Inactivo" }))} /></div>
+          </section>
 
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-500">Afiliados activos</p>
-                  <FiUsers className="text-emerald-500" />
-                </div>
-                <p className="mt-3 text-2xl font-semibold">
-                  {number(activeAffiliates)}
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  Con links o ventas
-                </p>
-              </div>
+          <section id="reports" className={s.section} aria-labelledby="reports-heading">
+            <div className={s.sectionHeading}><div><h2 id="reports-heading">Rendimiento</h2><p>{period.label} · Solo ventas pagadas, sin canceladas.</p></div></div>
+            <div className={s.metrics}>
+              {metric("Ventas pagadas", current.length.toLocaleString("es-UY"), period.days ? salesComparison(current.length, previous.length) : "Ventas confirmadas de todo el historial.")}
+              {metric("Facturación", money(gross), "Importe bruto de tus ventas en el período.")}
+              {metric("Ingreso neto", money(net), "Después de las comisiones de plataforma y afiliados.")}
+            </div>
+            <details className={s.advanced}><summary>Ver métricas adicionales</summary><div className={s.extraMetrics}>
+              {metric("Comisión de plataforma", money(current.reduce((sum, row) => sum + row.platformFee, 0)), "Descontada de las ventas del período.")}
+              {metric("Comisiones de afiliados", money(current.reduce((sum, row) => sum + row.affiliateFee, 0)), "Generadas por ventas a través de afiliados.")}
+              {metric("Ticket promedio", money(current.length ? gross / current.length : 0), "Facturación dividida por ventas pagadas.")}
+              {metric("Productos sin ventas", productStats.filter(product => !product.sales).length.toLocaleString("es-UY"), "Productos del catálogo sin ventas pagadas en el período.")}
+            </div></details>
+            <p className={s.periodNote}>Las ventas usan la fecha de creación de la compra y su estado actual de pago. Los ingresos del período no equivalen al saldo disponible para cobrar.</p>
+          </section>
 
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-500">Ticket promedio</p>
-                  <FiTrendingUp className="text-violet-500" />
-                </div>
-                <p className="mt-3 text-2xl font-semibold">{money(averageOrder)}</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {number(totalClicks)} clicks afiliados
-                </p>
-              </div>
-            </section>
+          <section id="affiliates" className={s.section} aria-labelledby="affiliates-heading">
+            <div className={s.sectionHeading}><div><h2 id="affiliates-heading">Tus afiliados</h2><p>{period.label} · Actividad de quienes recomiendan tus productos.</p></div></div>
+            <div className={s.metrics}>
+              {metric("Afiliados con ventas", affiliatesWithSales.toLocaleString("es-UY"), "Afiliados que generaron ventas pagadas en el período.")}
+              {metric("Clics en enlaces de productos", clicks.toLocaleString("es-UY"), "Visitas recibidas en el período. No incluye enlaces de campañas.")}
+              {metric("Enlaces de productos", productLinks.length.toLocaleString("es-UY"), `${new Set(productLinks.map(link => link.affiliateId)).size} afiliados con enlaces. Total histórico.`)}
+            </div>
+          </section>
 
-            <section
-              id="reports"
-              className="mt-6 grid scroll-mt-24 grid-cols-1 gap-4 xl:grid-cols-5"
-            >
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 xl:col-span-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-base font-semibold text-slate-950">
-                      Productos con mas ventas
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Ranking por facturacion pagada.
-                    </p>
-                  </div>
-                  <FiBarChart2 className="text-xl text-slate-500" />
-                </div>
+          <section id="orders" className={s.section} aria-labelledby="orders-heading">
+            <div className={s.sectionHeading}><div><h2 id="orders-heading">Tus ventas</h2><p>{period.label} · Importes netos y estado de cobro.</p></div><Link href="/seller/orders" className={s.textLink}>Gestionar ventas<ArrowRightIcon aria-hidden="true" /></Link></div>
+            <div className={s.panel}><DashboardActivity key={`orders-${period.value}`} empty="No hay ventas pagadas en este período. Podés ampliar el rango de fechas." items={current.map(row => ({ id: row.id, title: row.order.items.map(item => `${item.product.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`).join(", ") || "Venta digital", detail: `${date(row.order.createdAt)} · ${row.order.buyerName || "Sin nombre"} · ${row.order.buyerPhone || row.order.buyerEmail || "Sin contacto"} · Bruto ${money(row.grossAmount)}`, amount: `${money(row.netAmount)} netos`, status: row.status === "AVAILABLE" && row.fulfillmentStatus === "DELIVERED" ? "APPROVED" : row.status, label: row.status === "PAID" ? "Cobrado" : reservedIds.has(row.id) ? "Cobro solicitado" : row.status === "AVAILABLE" && row.fulfillmentStatus === "DELIVERED" ? "Disponible" : "Acceso por completar" }))} /></div>
+          </section>
 
-                <div className="mt-6 space-y-5">
-                  {productStats.length === 0 ? (
-                    <p className="text-sm leading-6 text-slate-500">
-                      Todavia no hay productos para mostrar. Crea tu primer producto
-                      para empezar a medir ventas.
-                    </p>
-                  ) : (
-                    productStats.map((product) => (
-                      <ProductBar
-                        key={product.id}
-                        label={product.name}
-                        value={product.revenue}
-                        max={maxProductRevenue}
-                        detail={`${number(product.orders)} ventas · ${number(
-                          product.clicks
-                        )} clicks · ${product.active ? "activo" : "inactivo"}`}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 xl:col-span-2">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-base font-semibold text-slate-950">
-                      Estado operativo
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Senales rapidas para decidir que mover.
-                    </p>
-                  </div>
-                  <FiBox className="text-xl text-orange-500" />
-                </div>
-
-                <div className="mt-6 space-y-4">
-                  <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-                    <p className="text-sm font-medium text-slate-700">
-                      Productos sin ventas
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {number(products.filter((product) => product._count.orders === 0).length)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
-                    <p className="text-sm font-medium text-slate-700">
-                      Links de afiliados
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {number(productLinks.length)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-orange-100 bg-orange-50 p-3 sm:p-4">
-                    <p className="text-sm leading-6 text-orange-900">
-                      Si tienes clicks pero pocas ventas, revisa precio, comision
-                      afiliada y claridad de la pagina de producto.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-5">
-              <div
-                id="orders"
-                className="scroll-mt-24 rounded-lg border border-slate-200 bg-white shadow-sm xl:col-span-3"
-              >
-                <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-                  <div>
-                    <h2 className="text-base font-semibold text-slate-950">
-                      Ventas digitales recientes
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Ultimas ventas pagas con cliente y estado de liquidacion.
-                    </p>
-                  </div>
-                  <Link
-                    href="/seller/products"
-                    className="hidden text-sm font-semibold text-orange-600 hover:text-orange-700 sm:inline"
-                  >
-                    Ver productos
-                  </Link>
-                </div>
-
-                <div className="max-h-[460px] overflow-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-5 py-3">Cliente</th>
-                        <th className="px-5 py-3">Productos</th>
-                        <th className="px-5 py-3">Fecha</th>
-                        <th className="px-5 py-3 text-right">Bruto / neto</th>
-                        <th className="px-5 py-3">Liquidacion</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {recentSettlements.length === 0 ? (
-                        <tr>
-                          <td className="px-5 py-8 text-slate-500" colSpan={5}>
-                            Todavia no hay ventas digitales registradas.
-                          </td>
-                        </tr>
-                      ) : (
-                        recentSettlements.map((settlement) => (
-                          <tr key={settlement.id} className="hover:bg-slate-50">
-                            <td className="px-5 py-4">
-                              <p className="font-medium text-slate-900">
-                                {settlement.order.buyerName ?? "Sin nombre"}
-                              </p>
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                {settlement.order.buyerPhone ??
-                                  settlement.order.buyerEmail ??
-                                  "Sin contacto"}
-                              </p>
-                            </td>
-                            <td className="px-5 py-4 text-slate-700">
-                              {settlement.order.items
-                                .map((item) =>
-                                  item.quantity > 1
-                                    ? `${item.product.name} x${item.quantity}`
-                                    : item.product.name
-                                )
-                                .join(", ") || "Venta digital"}
-                            </td>
-                            <td className="px-5 py-4 text-slate-600">
-                              {formatDate(settlement.createdAt)}
-                            </td>
-                            <td className="px-5 py-4 text-right">
-                              <p className="font-semibold text-slate-950">
-                                {money(settlement.grossAmount)}
-                              </p>
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                Neto {money(settlement.netAmount)}
-                              </p>
-                            </td>
-                            <td className="px-5 py-4">
-                              <span
-                                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusClasses(
-                                  settlement.status
-                                )}`}
-                              >
-                                {statusLabel(settlement.status)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div
-                id="payments"
-                className="scroll-mt-24 rounded-lg border border-slate-200 bg-white shadow-sm xl:col-span-2"
-              >
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <h2 className="text-base font-semibold text-slate-950">
-                    Liquidaciones
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Movimientos netos por cobrar.
-                  </p>
-                  <div className="mt-4 rounded-lg border border-sky-100 bg-sky-50 px-4 py-3">
-                    <p className="text-sm leading-6 text-sky-900">
-                      Los pagos procesados por Afilink se acreditan automaticamente{" "}
-                      {PAYMENT_ACCREDITATION_DAYS} dias despues de la compra.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="max-h-[460px] divide-y divide-slate-100 overflow-y-auto">
-                  {recentSettlements.length === 0 ? (
-                    <p className="px-5 py-8 text-sm text-slate-500">
-                      Todavia no hay liquidaciones.
-                    </p>
-                  ) : (
-                    recentSettlements.map((settlement) => (
-                      <div
-                        key={settlement.id}
-                        className="flex items-start justify-between gap-4 px-5 py-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-slate-900">
-                            {settlement.order.items
-                              .map((item) => item.product.name)
-                              .join(", ") || "Venta digital"}
-                          </p>
-                          <PaymentAvailabilityMeta
-                            saleDate={settlement.createdAt}
-                            grossAmount={settlement.grossAmount}
-                          />
-                          <p className="sr-only">
-                            {formatDate(settlement.createdAt)} · bruto{" "}
-                            {money(settlement.grossAmount)}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="font-semibold text-slate-950">
-                            {money(settlement.netAmount)}
-                          </p>
-                          <span
-                            className={`mt-2 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusClasses(
-                              settlement.status
-                            )}`}
-                          >
-                            {statusLabel(settlement.status)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </section>
-          </div>
-          </main>
-        </div>
+          <section id="payments" className={s.section} aria-labelledby="payments-heading">
+            <div className={s.sectionHeading}><div><h2 id="payments-heading">Historial de cobros</h2><p>Todas tus solicitudes, independientemente del período seleccionado.</p></div><Link href="/perfil/config" className={s.textLink}>Datos de cobro<ArrowRightIcon aria-hidden="true" /></Link></div>
+            <div className={s.panel}><DashboardActivity empty="Todavía no solicitaste un cobro. Cuando tengas saldo disponible, podés solicitarlo desde el resumen de arriba." items={requests.map(request => ({ id: request.id, title: "Solicitud de cobro", detail: `Solicitado: ${date(request.requestedAt)}${request.paidAt ? ` · Pagado: ${date(request.paidAt)}` : ""}`, amount: `${money(request.amount)} UYU`, status: request.status, label: paymentLabels[request.status] ?? request.status }))} /></div>
+          </section>
+        </div></main>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { type Prisma } from "@prisma/client";
 import { requireRole, requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { financialTransaction } from "@/lib/financial-transaction";
 import {
   CommissionStatus,
   FulfillmentStatus,
@@ -24,12 +24,13 @@ export async function PATCH(
     const { id } = await params;
     await req.json().catch(() => ({}));
 
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await financialTransaction(async (tx: Prisma.TransactionClient) => {
       const order = await tx.order.findUnique({
         where: { id },
         select: {
           id: true,
           status: true,
+          commissions: { select: { status: true } },
           settlements: {
             select: {
               id: true,
@@ -53,7 +54,7 @@ export async function PATCH(
         };
       }
 
-      if (order.settlements.some((settlement) => settlement.status === SettlementStatus.PAID)) {
+      if (order.settlements.some((settlement) => settlement.status === SettlementStatus.PAID) || order.commissions.some(commission => commission.status === CommissionStatus.PAID)) {
         return {
           status: 400 as const,
           body: {

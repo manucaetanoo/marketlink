@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { FiDollarSign, FiLink, FiPercent } from "react-icons/fi";
+import { FiLink } from "react-icons/fi";
 import GetAffiliateLinkButton from "@/components/GetAffiliateLinkButton";
 
 type SellerNet = {
@@ -80,37 +80,25 @@ export function ProductAffiliatePanel({
   const earning = Math.round((price * commissionValue) / 100);
 
   return (
-    <div className="mt-5 rounded-2xl border border-orange-200 bg-[#fff8f1] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">
-        Oportunidad para afiliados
-      </p>
-      <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
-        Podés ganar {money(earning)}
+    <section id="affiliate-panel" aria-labelledby="affiliate-title" className="mb-5 scroll-mt-28 rounded-[20px] border border-orange-200 bg-[#fff8f1] p-6">
+      <h2 id="affiliate-title" className="text-lg font-semibold tracking-tight text-[#181917]">
+        Promocioná este producto
       </h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
-        Compartí tu link. Si la compra entra por ese link, la comisión queda
-        registrada para vos.
+      <p className="mt-4 text-2xl font-bold tracking-tight text-[#181917]">
+        Ganás {money(earning)} <span className="text-xs font-medium text-[#62645f]">UYU</span>
       </p>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-orange-100 bg-white p-3">
-          <FiDollarSign className="text-orange-500" />
-          <p className="mt-2 text-xs font-medium text-slate-500">Ganancia</p>
-          <p className="text-base font-semibold text-slate-950">{money(earning)}</p>
-        </div>
-        <div className="rounded-xl border border-orange-100 bg-white p-3">
-          <FiPercent className="text-orange-500" />
-          <p className="mt-2 text-xs font-medium text-slate-500">Comisión</p>
-          <p className="text-base font-semibold text-slate-950">{commissionValue}%</p>
-        </div>
-      </div>
-
+      <p className="mt-1 text-sm text-[#62645f]">por venta confirmada</p>
+      <p className="mt-3 text-sm font-medium text-[#b74300]">Comisión del {commissionValue}%</p>
       <GetAffiliateLinkButton
         productId={productId}
         affiliateId={user.id}
-        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+        idleLabel="Generar mi enlace"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#f96f08] px-4 py-3 text-sm font-semibold text-[#181917] transition hover:bg-[#ff871e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
       />
-    </div>
+      <p className="mt-4 text-xs leading-6 text-[#62645f]">
+        Compartilo y ganá una comisión cuando compren desde tu enlace.
+      </p>
+    </section>
   );
 }
 

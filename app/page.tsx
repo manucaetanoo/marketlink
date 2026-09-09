@@ -48,7 +48,7 @@ export default function Home() {
             <a className={s.textLink} href="#como-funciona">Conocé cómo funciona <ArrowDownIcon className={s.arrow} aria-hidden="true" /></a>
           </div>
           <div className={s.heroVisual}>
-            <div className={s.photoFrame}><Image src="/img/affiliate-home.png" alt="Una persona consulta el panel de Afilink en su celular, con comisiones y una venta confirmada" width={1122} height={1402} priority sizes="(max-width: 700px) 100vw, 50vw" className={s.heroPhoto} /></div>
+            <div className={s.photoFrame}><Image src="/img/affiliate-home-logo.png" alt="Una persona consulta el panel de Afilink en su celular, con comisiones y una venta confirmada" width={1122} height={1402} priority sizes="(max-width: 700px) 100vw, 50vw" className={s.heroPhoto} /></div>
             <div className={s.linkTag}><ArrowUpRightIcon className={`${s.arrow} ${s.linkSymbol}`} aria-hidden="true" /><div><span className={s.label}>TU ENLACE DE AFILIADO</span><strong>Lo compartís vos.</strong></div></div>
             <div className={s.commissionCard}><span className={s.commissionIcon} aria-hidden="true">$</span><div><span className={s.label}>POR CADA VENTA CONFIRMADA</span><strong>Una comisión para vos.</strong><p>Cuando compran desde tu enlace.</p></div></div>
             <span className={s.visualCaption}>Tus recomendaciones pueden generar ingresos.</span>

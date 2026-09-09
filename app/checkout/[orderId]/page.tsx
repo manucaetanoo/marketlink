@@ -70,13 +70,11 @@ export default async function CheckoutOrderPage({ params }: Props) {
         },
       ];
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = Math.max(0, checkoutOrder.total - subtotal);
 
   const order = {
     id: orderId,
     total: checkoutOrder.total,
     subtotal,
-    taxAmount,
     status: checkoutOrder.status,
     paymentStatus: checkoutOrder.paymentStatus,
     shipping: {

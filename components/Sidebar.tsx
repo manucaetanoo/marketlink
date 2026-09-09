@@ -59,7 +59,7 @@ const menuAfiliado: Menu = {
       title: "PRINCIPAL",
       items: [
         { title: "Dashboard", href: "/dashboard/affiliate", icon: <FiBarChart2 /> },
-        { title: "Mis links", href: "/dashboard/affiliate#links", icon: <FiLink /> },
+        { title: "Mis enlaces", href: "/dashboard/affiliate#links", icon: <FiLink /> },
       ],
     },
     {
@@ -67,7 +67,7 @@ const menuAfiliado: Menu = {
       items: [
         { title: "Ventas", href: "/dashboard/affiliate#orders", icon: <FiFileText /> },
         { title: "Comisiones", href: "/dashboard/affiliate#commissions", icon: <FiBarChart2 /> },
-        { title: "Pagos", href: "/dashboard/affiliate#payments", icon: <FiCreditCard /> },
+        { title: "Cobros", href: "/dashboard/affiliate#payments", icon: <FiCreditCard /> },
       ],
     },
     {
@@ -268,7 +268,7 @@ export default function Sidebar() {
                 return (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={targetHash && pathname === "/dashboard/affiliate" && pathname === targetPath ? `#${targetHash}` : item.href}
                     title={collapsed ? item.title : undefined}
                     className={cn(
                       "relative flex items-center rounded-xl px-3 py-2.5 transition",

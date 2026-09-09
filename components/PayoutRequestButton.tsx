@@ -7,9 +7,13 @@ import { FiCreditCard } from "react-icons/fi";
 export default function PayoutRequestButton({
   disabled,
   pending,
+  idleLabel = "Solicitar liquidacion",
+  pendingLabel = "Liquidacion solicitada",
 }: {
   disabled: boolean;
   pending: boolean;
+  idleLabel?: string;
+  pendingLabel?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -47,7 +51,7 @@ export default function PayoutRequestButton({
         className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <FiCreditCard />
-        {pending ? "Liquidacion solicitada" : loading ? "Solicitando..." : "Solicitar liquidacion"}
+        {pending ? pendingLabel : loading ? "Solicitando..." : idleLabel}
       </button>
       {message && (
         <p className="max-w-xs text-left text-xs leading-5 text-slate-500 sm:text-right">

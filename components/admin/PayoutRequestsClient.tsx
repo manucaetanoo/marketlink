@@ -63,7 +63,8 @@ export default function PayoutRequestsClient({
   const [savingId, setSavingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function markPaid(request: PayoutRequest, formData: FormData) {
+  async function markPaid(request: PayoutRequest, formData: FormData, cancel = false) {
+    if (cancel && !window.confirm("Cancelá solo si esta solicitud todavía no fue transferida. El saldo válido volverá a estar disponible. ¿Continuar?")) return;
     setSavingId(request.id);
     setMessage(null);
 
@@ -73,6 +74,7 @@ export default function PayoutRequestsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           adminNotes: String(formData.get("adminNotes") || ""),
+          action: cancel ? "cancel" : "pay",
         }),
       });
       const data = await res.json().catch(() => null);
@@ -115,7 +117,7 @@ export default function PayoutRequestsClient({
                     {kindLabel(request.kind)}
                   </span>
                   <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                    Pendiente
+                    Transferencia solicitada
                   </span>
                 </div>
                 <h2 className="mt-3 text-lg font-semibold text-slate-950">
@@ -184,6 +186,9 @@ export default function PayoutRequestsClient({
                 >
                   <FiCheckCircle />
                   {savingId === request.id ? "Guardando..." : "Marcar liquidado"}
+                </button>
+                <button type="button" disabled={savingId !== null} onClick={() => markPaid(request, new FormData(), true)} className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm disabled:opacity-60">
+                  Cancelar solicitud sin transferir
                 </button>
               </div>
             </div>

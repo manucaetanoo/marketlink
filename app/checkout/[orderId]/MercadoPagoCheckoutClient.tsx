@@ -30,7 +30,6 @@ type OrderCheckoutData = {
   id: string;
   total: number;
   subtotal: number;
-  taxAmount: number;
   status: string;
   paymentStatus: string | null;
   shipping: ShippingData;
@@ -655,20 +654,6 @@ export default function MercadoPagoCheckoutClient({
                 ))}
               </div>
               <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-5">
-                <div className="space-y-2 text-sm text-slate-500">
-                  <div className="flex items-center justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-medium text-slate-700">
-                      ${Number(order.subtotal).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Recargo</span>
-                    <span className="font-medium text-slate-700">
-                      ${Number(order.taxAmount).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
                 <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-950 px-4 py-3 text-sm text-white">
                   <span className="font-medium">Total</span>
                   <span className="text-xl font-bold">

@@ -1,0 +1,3 @@
+ALTER TABLE "PayoutRequest"
+ADD COLUMN "commissionIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN "settlementIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

@@ -385,7 +385,7 @@ export default function ProfileSettingsWarmPage() {
                     </div>
                   </section>
 
-                  <section className="space-y-6 bg-slate-50/60 p-5 sm:p-6">
+                  <section id="datos-de-cobro" className="scroll-mt-6 space-y-6 bg-slate-50/60 p-5 sm:p-6">
                     <SectionHeader
                       icon={<FiCreditCard />}
                       title="Datos de facturacion y cobro"
@@ -435,6 +435,7 @@ export default function ProfileSettingsWarmPage() {
                           onChange={(e) => update("payoutDocumentType", e.target.value)}
                           className={selectClass}
                         >
+                          <option value="">Seleccioná un tipo de documento</option>
                           <option value="CI">CI</option>
                           <option value="DNI">DNI</option>
                           <option value="RUT">RUT</option>
@@ -475,6 +476,7 @@ export default function ProfileSettingsWarmPage() {
                           className={inputClass}
                           
                         >
+                          <option value="">Seleccioná un país</option>
                           <option value="UY">Uruguay</option>
                           <option value="AR">Argentina</option>
                         </select>
@@ -486,17 +488,18 @@ export default function ProfileSettingsWarmPage() {
                           onChange={(e) => update("payoutCurrency", e.target.value)}
                           className={inputClass}
                         >
+                          <option value="">Seleccioná una moneda</option>
                           <option value="UYU">UYU</option>
                           <option value="USD">USD</option>
                         </select>
                       </Field>
 
-                      <Field label="Banco * ">
+                      <Field label={form.payoutMethod === "BANK_TRANSFER" ? "Banco *" : "Banco (opcional)"}>
                         <input
                           value={form.bankName}
                           onChange={(e) => update("bankName", e.target.value)}
                           className={inputClass}
-                          required
+                          required={form.payoutMethod === "BANK_TRANSFER"}
                         />
                       </Field>
 
@@ -509,13 +512,13 @@ export default function ProfileSettingsWarmPage() {
                         />
                       </Field>
 
-                      <Field label="Numero de cuenta *">
+                      <Field label={form.payoutMethod === "BANK_TRANSFER" ? "Número de cuenta (o completá el alias)" : "Número de cuenta (opcional)"}>
                         <input
                           value={form.bankAccountNumber}
                           onChange={(e) =>
                             update("bankAccountNumber", e.target.value)
                           }
-                          required
+                          required={form.payoutMethod === "BANK_TRANSFER" && !form.bankAccountAlias.trim()}
                           className={inputClass}
                         />
                       </Field>

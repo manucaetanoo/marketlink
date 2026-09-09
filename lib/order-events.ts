@@ -4,9 +4,9 @@ import {
   SettlementStatus,
 } from "@/lib/prisma-enums";
 import { type Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { sendTransactionalEmail } from "@/lib/email";
 import { getProductDigitalAccessMessage } from "@/lib/product-access";
+import { financialTransaction } from "@/lib/financial-transaction";
 
 type MarkOrderPaidInput = {
   orderId: string;
@@ -84,7 +84,7 @@ export async function markOrderPaidAndNotify({
   paymentProvider,
   paymentStatus = "approved",
 }: MarkOrderPaidInput) {
-  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  const result = await financialTransaction(async (tx: Prisma.TransactionClient) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
       include: {
@@ -129,6 +129,10 @@ export async function markOrderPaidAndNotify({
 
     if (order.status === OrderStatus.PAID) {
       return { alreadyPaid: true, order: null };
+    }
+
+    if (["refunded", "charged_back", "canceled"].includes(order.paymentStatus?.toLowerCase() ?? "")) {
+      throw new Error("El pago de esta orden fue revertido");
     }
 
     const items = order.items;
@@ -540,7 +544,7 @@ export async function markOrderPaidAndNotify({
   <!-- INFO -->
   <div style="margin-top:24px;">
     <p style="margin:0;font-size:14px;line-height:1.7;color:#71717a;">
-      La comisión quedará disponible según los tiempos de validación y liquidación configurados por la plataforma.
+      Tu comisión ya está disponible para solicitar el cobro desde tu dashboard.
     </p>
   </div>
 </div>

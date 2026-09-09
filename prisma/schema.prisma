@@ -492,6 +492,10 @@ model PayoutRequest {
   paidAt      DateTime?
   adminNotes  String?   @db.Text
 
+  // Exact earnings reserved by this request. Empty arrays identify legacy requests.
+  commissionIds String[] @default([])
+  settlementIds String[] @default([])
+
   @@index([requesterId])
   @@index([kind])
   @@index([status])
