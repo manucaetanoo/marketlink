@@ -14,7 +14,8 @@
 .heroDescription strong { font-weight: 600; color: var(--ink); }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 27px; text-decoration: none; font-weight: 700; border-radius: 10px; min-height: 58px; padding: 17px 25px; transition: background .18s, transform .18s; background: var(--orange); color: #141414; font-size: 17px; box-shadow: 0 5px 0 #edebdf; }
 .button:hover { transform: translateY(-2px); background: #ff871e; }
-.button span { font-size: 25px; line-height: 1; }
+.arrow { display: block; width: 20px; height: 20px; flex-shrink: 0; fill: currentColor; stroke: none; }
+.button .arrow { width: 25px; height: 25px; }
 .micro { font-size: 13px; margin: 19px 0 32px; line-height: 1.6; color: var(--muted); }
 .micro > span:first-child { color: var(--green); margin-right: 5px; }
 .divider { margin-inline: 8px; color: #a6aaa1; }
@@ -23,7 +24,7 @@
 .photoFrame { border-radius: 160px 24px 24px; background: #ffead7; overflow: hidden; aspect-ratio: 1 / 1.15; }
 .heroPhoto { width: 100%; height: 100%; object-fit: cover; }
 .linkTag { position: absolute; top: 45px; left: -14px; background: var(--ink); color: white; padding: 16px 20px; border-radius: 12px; display: flex; align-items: center; gap: 14px; box-shadow: 0 12px 36px #18191715; }
-.linkSymbol { font-size: 28px; color: #ff982f; }
+.linkSymbol { width: 28px; height: 28px; color: #ff982f; }
 .label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; line-height: 1.5; margin-bottom: 5px; }
 .linkTag strong { font-size: 16px; font-weight: 500; }
 .commissionCard { position: absolute; bottom: 55px; left: -30px; right: 33px; padding: 25px; background: white; box-shadow: 0 15px 40px #1112; border: 1px solid #efefec; border-radius: 14px; display: flex; gap: 16px; align-items: center; }

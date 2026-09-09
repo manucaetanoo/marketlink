@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DM_Sans, Manrope } from "next/font/google";
+import { ArrowDownIcon, ArrowUpRightIcon } from "@heroicons/react/24/solid";
 import HomeNavbar from "@/components/HomeNavbar";
 import { FlipWords } from "@/components/ui/FlipWords";
 import s from "./home.module.css";
@@ -29,7 +30,7 @@ const products = [
 ];
 
 function RegisterLink({ children }: { children: React.ReactNode }) {
-  return <Link className={s.button} href="/register">{children}<span aria-hidden="true">↗</span></Link>;
+  return <Link className={s.button} href="/register">{children}<ArrowUpRightIcon className={s.arrow} aria-hidden="true" /></Link>;
 }
 
 export default function Home() {
@@ -44,11 +45,11 @@ export default function Home() {
             <p className={s.heroDescription}>Recomendá productos digitales y <strong>ganá dinero por cada venta realizada desde tu enlace.</strong></p>
             <RegisterLink>Quiero registrarme gratis</RegisterLink>
             <p className={s.micro}><span aria-hidden="true">✓</span> Registro gratuito <span className={s.divider}>/</span> Sin crear un producto propio</p>
-            <a className={s.textLink} href="#como-funciona">Conocé cómo funciona <span aria-hidden="true">↓</span></a>
+            <a className={s.textLink} href="#como-funciona">Conocé cómo funciona <ArrowDownIcon className={s.arrow} aria-hidden="true" /></a>
           </div>
           <div className={s.heroVisual}>
             <div className={s.photoFrame}><Image src="/img/affiliate-home.png" alt="Una persona consulta el panel de Afilink en su celular, con comisiones y una venta confirmada" width={1122} height={1402} priority sizes="(max-width: 700px) 100vw, 50vw" className={s.heroPhoto} /></div>
-            <div className={s.linkTag}><span className={s.linkSymbol} aria-hidden="true">↗</span><div><span className={s.label}>TU ENLACE DE AFILIADO</span><strong>Lo compartís vos.</strong></div></div>
+            <div className={s.linkTag}><ArrowUpRightIcon className={`${s.arrow} ${s.linkSymbol}`} aria-hidden="true" /><div><span className={s.label}>TU ENLACE DE AFILIADO</span><strong>Lo compartís vos.</strong></div></div>
             <div className={s.commissionCard}><span className={s.commissionIcon} aria-hidden="true">$</span><div><span className={s.label}>POR CADA VENTA CONFIRMADA</span><strong>Una comisión para vos.</strong><p>Cuando compran desde tu enlace.</p></div></div>
             <span className={s.visualCaption}>Tus recomendaciones pueden generar ingresos.</span>
           </div>
@@ -60,7 +61,7 @@ export default function Home() {
         <section className={`${s.catalog} ${s.section}`} id="beneficios" aria-labelledby="catalog-title"><div className={s.wrap}>
           <div className={s.catalogHeading}><div><p className={s.eyebrow}>PRODUCTOS REALES PARA RECOMENDAR</p><h2 id="catalog-title">Encontrá tu próximo<br />producto para compartir.</h2></div><p>Cursos y ebooks que podés conocer<br />antes de recomendar.</p></div>
           <div className={s.products}>{products.map(product => <article className={s.product} key={product.title}><div className={`${s.productArt} ${s[product.art]}`}><span>{product.label}</span><b>{product.name}{product.art === "canva" ? <span className={s.artDot}>.</span> : product.art === "capcut" ? <span className={s.outline}> ADS</span> : <><br />en Canva</>}</b><span>{product.tagline}</span></div><div className={s.productInfo}><p className={s.productType}>{product.type}</p><h3>{product.title}</h3><p>{product.description}</p></div></article>)}</div>
-          <Link className={s.textLink} href="/products">Explorar el catálogo de Afilink <span aria-hidden="true">↗</span></Link>
+          <Link className={s.textLink} href="/products">Explorar el catálogo de Afilink <ArrowUpRightIcon className={s.arrow} aria-hidden="true" /></Link>
         </div></section>
         <section className={`${s.faq} ${s.section} ${s.wrap}`} id="faq" aria-labelledby="faq-title"><div><p className={s.eyebrow}>ANTES DE EMPEZAR</p><h2 id="faq-title">Tus dudas,<br />resueltas.</h2><p>No necesitás tener un producto propio para ser afiliado.</p></div><div className={s.questions}>
           {faqs.map(([question, answer], i) => <details key={question} open={i === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}
