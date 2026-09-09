@@ -70,6 +70,7 @@ export async function POST(req: Request) {
       await sendEmailVerification({ req, user: exists });
       return NextResponse.json({
         message: "La cuenta ya existia. Te reenviamos el email de verificacion.",
+        created: false,
         email: exists.email,
         role: exists.role,
       });
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
   return NextResponse.json(
     {
       message: "Cuenta creada. Te enviamos un email para verificar tu cuenta.",
+      created: true,
       email: user.email,
       role: user.role,
     },

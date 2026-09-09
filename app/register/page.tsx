@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { trackAffiliateRegistration } from "@/lib/meta-pixel";
 import Link from "next/link";
 import { FiArrowRight, FiBriefcase } from "react-icons/fi";
 
@@ -14,9 +15,12 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const completed = useRef(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting.current || completed.current) return;
     setError(null);
     
 
@@ -31,26 +35,32 @@ export default function RegisterPage() {
       return;
     }
 
+    submitting.current = true;
     setLoading(true);
 
-    // Enviamos los datos al backend
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role: "AFFILIATE" }),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role: "AFFILIATE" }),
+      });
 
-    setLoading(false);
+      const data = await res.json().catch(() => null);
 
-    const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(data?.error || "No se pudo crear la cuenta");
+        return;
+      }
 
-    // ok es una propiedad de la respuesta (res) que es un booleano y indica si el status esta entre 200 y 299
-    if (!res.ok) {
-      setError(data?.error || "No se pudo crear la cuenta");
-      return;
+      completed.current = true;
+      trackAffiliateRegistration(res.status, data);
+      setConfirmationEmail(data?.email ?? email);
+    } catch {
+      setError("No se pudo crear la cuenta. Intentá nuevamente.");
+    } finally {
+      submitting.current = false;
+      setLoading(false);
     }
-
-    setConfirmationEmail(data?.email ?? email);
 
   }
 
